@@ -1,0 +1,27 @@
+# Python bytecode
+*.pyc
+__pycache__/
+
+# Flask instance folder (chứa secret keys)
+instance/
+
+# Environment variables
+.env
+.env.*
+
+# Databases
+*.db
+*.sqlite3
+
+# VSCode settings
+.vscode/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Flask migration folder (nếu dùng flask-migrate)
+migrations/
