@@ -1,6 +1,8 @@
 from flask import Flask
+from db import mysql, init_app
 
 app = Flask(__name__)
+init_app(app)
 
 @app.route('/')
 def home():
