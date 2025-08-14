@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liên Hệ - Shop Giày Dép</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-md">
+        <nav class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-blue-600">
+                <i class="fas fa-shoe-prints mr-2"></i>Shop Giày Dép
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-blue-600 transition">Trang Chủ</a>
+                <a href="#" class="text-gray-700 hover:text-blue-600 transition">Sản Phẩm</a>
+                <a href="#" class="text-gray-700 hover:text-blue-600 transition">Giới Thiệu</a>
+                <a href="{{ url_for('contact') }}" class="text-blue-600 font-semibold">Liên Hệ</a>
+                <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-blue-600 transition">Đăng Nhập</a>
+                <a href="{{ url_for('giohang') }}" class="text-gray-700 hover:text-blue-600 transition">
+                    <i class="fas fa-shopping-cart"></i>
+                </a>
+            </div>
+            <div class="md:hidden">
+                <button class="text-gray-700">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Liên Hệ Với Chúng Tôi</h1>
+            <p class="text-xl opacity-90">Chúng tôi luôn sẵn sàng lắng nghe ý kiến của bạn. Hãy gửi tin nhắn và chúng tôi sẽ phản hồi sớm nhất có thể.</p>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="py-16">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-2 gap-12">
+                <!-- Contact Form -->
+                <div class="bg-white rounded-lg shadow-lg p-8">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Gửi Tin Nhắn</h2>
+                    <form method="POST" action="{{ url_for('contact_submit') }}" class="space-y-6">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Họ</label>
+                                <input type="text" name="first_name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nguyễn">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 font-semibold mb-2">Tên</label>
+                                <input type="text" name="last_name" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Văn A">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Email</label>
+                            <input type="email" name="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="nguyenvana@email.com">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Số Điện Thoại</label>
+                            <input type="tel" name="phone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="0123 456 789">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Chủ Đề</label>
+                            <select name="subject" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="general">Tư vấn chung</option>
+                                <option value="support">Hỗ trợ sản phẩm</option>
+                                <option value="order">Tra cứu đơn hàng</option>
+                                <option value="return">Đổi trả hàng</option>
+                                <option value="business">Hợp tác kinh doanh</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 font-semibold mb-2">Nội Dung</label>
+                            <textarea name="message" rows="5" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Hãy cho chúng tôi biết chúng tôi có thể giúp gì cho bạn..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition duration-300">
+                            <i class="fas fa-paper-plane mr-2"></i>Gửi Tin Nhắn
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="space-y-8">
+                    <!-- Contact Info Cards -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Thông Tin Liên Hệ</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-map-marker-alt text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Địa Chỉ</h4>
+                                    <p class="text-gray-600">123 Đường Giày Dép, Quận 1, TP.HCM</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-phone text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Điện Thoại</h4>
+                                    <p class="text-gray-600">0123 456 789</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-envelope text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Email</h4>
+                                    <p class="text-gray-600">info@shopgiaydep.com</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center">
+                                <div class="bg-blue-100 p-3 rounded-full mr-4">
+                                    <i class="fas fa-clock text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-800">Giờ Làm Việc</h4>
+                                    <p class="text-gray-600">Thứ 2 - Chủ nhật: 8:00 - 22:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Social Media -->
+                    <div class="bg-white rounded-lg shadow-lg p-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-6">Theo Dõi Chúng Tôi</h3>
+                        <div class="flex space-x-4">
+                            <a href="#" class="bg-blue-600 text-white p-3 rounded-full hover:bg-blue-700 transition">
+                                <i class="fab fa-facebook-f"></i>
+                            </a>
+                            <a href="#" class="bg-pink-600 text-white p-3 rounded-full hover:bg-pink-700 transition">
+                                <i class="fab fa-instagram"></i>
+                            </a>
+                            <a href="#" class="bg-red-600 text-white p-3 rounded-full hover:bg-red-700 transition">
+                                <i class="fab fa-youtube"></i>
+                            </a>
+                            <a href="#" class="bg-green-600 text-white p-3 rounded-full hover:bg-green-700 transition">
+                                <i class="fab fa-tiktok"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Map Placeholder -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                        <div class="h-64 bg-gray-300 flex items-center justify-center">
+                            <div class="text-center text-gray-600">
+                                <i class="fas fa-map text-4xl mb-2"></i>
+                                <p>Bản Đồ Tương Tác</p>
+                                <p class="text-sm">Tích hợp Google Maps sẽ hiển thị tại đây</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="bg-gray-100 py-16">
+        <div class="container mx-auto px-4">
+            <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Câu Hỏi Thường Gặp</h2>
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="font-semibold text-gray-800 mb-3">Chính sách đổi trả như thế nào?</h3>
+                    <p class="text-gray-600">Chúng tôi hỗ trợ đổi trả trong vòng 7 ngày với sản phẩm chưa sử dụng, còn nguyên tem mác.</p>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="font-semibold text-gray-800 mb-3">Có giao hàng toàn quốc không?</h3>
+                    <p class="text-gray-600">Có, chúng tôi giao hàng toàn quốc. Phí ship và thời gian giao hàng tùy theo khu vực.</p>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="font-semibold text-gray-800 mb-3">Làm sao để theo dõi đơn hàng?</h3>
+                    <p class="text-gray-600">Bạn sẽ nhận được mã theo dõi qua SMS và email sau khi đơn hàng được gửi đi.</p>
+                </div>
+                <div class="bg-white rounded-lg p-6 shadow-md">
+                    <h3 class="font-semibold text-gray-800 mb-3">Có bảng size chi tiết không?</h3>
+                    <p class="text-gray-600">Có, mỗi sản phẩm đều có bảng size chi tiết giúp bạn chọn size phù hợp nhất.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-4 right-4 z-50">
+                {% for category, message in messages %}
+                    <div class="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg mb-2">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">
+                        <i class="fas fa-shoe-prints mr-2"></i>Shop Giày Dép
+                    </h3>
+                    <p class="text-gray-400">Đối tác tin cậy cho giày dép chất lượng từ năm 2020.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Liên Kết Nhanh</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="{{ url_for('home') }}" class="hover:text-white transition">Trang Chủ</a></li>
+                        <li><a href="#" class="hover:text-white transition">Sản Phẩm</a></li>
+                        <li><a href="#" class="hover:text-white transition">Giới Thiệu</a></li>
+                        <li><a href="{{ url_for('contact') }}" class="hover:text-white transition">Liên Hệ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Hỗ Trợ Khách Hàng</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="#" class="hover:text-white transition">Hướng Dẫn Chọn Size</a></li>
+                        <li><a href="#" class="hover:text-white transition">Chính Sách Đổi Trả</a></li>
+                        <li><a href="#" class="hover:text-white transition">Thông Tin Vận Chuyển</a></li>
+                        <li><a href="#" class="hover:text-white transition">Câu Hỏi Thường Gặp</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-semibold mb-4">Đăng Ký Nhận Tin</h4>
+                    <p class="text-gray-400 mb-4">Đăng ký để nhận thông tin khuyến mãi mới nhất.</p>
+                    <div class="flex">
+                        <input type="email" placeholder="Email của bạn" class="px-3 py-2 bg-gray-700 text-white rounded-l-lg flex-1 focus:outline-none">
+                        <button class="bg-blue-600 px-4 py-2 rounded-r-lg hover:bg-blue-700 transition">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 Shop Giày Dép. Tất cả quyền được bảo lưu.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Mobile menu toggle
+        document.querySelector('.md\\:hidden button').addEventListener('click', function() {
+            const mobileMenu = document.querySelector('.hidden.md\\:flex');
+            if (mobileMenu) {
+                mobileMenu.classList.toggle('hidden');
+                mobileMenu.classList.toggle('flex');
+                mobileMenu.classList.toggle('flex-col');
+                mobileMenu.classList.toggle('absolute');
+                mobileMenu.classList.toggle('top-full');
+                mobileMenu.classList.toggle('left-0');
+                mobileMenu.classList.toggle('w-full');
+                mobileMenu.classList.toggle('bg-white');
+                mobileMenu.classList.toggle('shadow-lg');
+                mobileMenu.classList.toggle('p-4');
+            }
+        });
+
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const flashMessages = document.querySelector('.fixed.top-4.right-4');
+            if (flashMessages) {
+                flashMessages.style.opacity = '0';
+                setTimeout(() => flashMessages.remove(), 500);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

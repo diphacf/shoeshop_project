@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShoeStore - Bộ sưu tập Giày & Dép cao cấp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold text-gray-800">ShoeStore</h1>
+                    
+                    <!-- Navigation -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-gray-900 font-medium {{ 'font-bold underline' if not current_category }}">Trang chủ</a>
+                        <a href="{{ url_for('products_by_category', category='giay') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='giay' }}">Giày</a>
+                        <a href="{{ url_for('products_by_category', category='dep') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='dep' }}">Dép</a>
+                        <a href="{{ url_for('contact') }}" class="text-gray-700 hover:text-gray-900">Liên hệ</a>
+                    </nav>
+                </div>
+
+                <!-- Search & Cart -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search Bar -->
+                    <form action="{{ url_for('search') }}" method="get" class="hidden md:flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                        <i class="fas fa-search text-gray-400 mr-2"></i>
+                        <input name="q" value="{{ search_query or '' }}" type="text" placeholder="Tìm kiếm sản phẩm..." class="bg-transparent outline-none text-sm w-64" />
+                    </form>
+                    
+                    <!-- Cart -->
+                    <a href="{{ url_for('giohang') }}" class="relative p-2">
+                        <i class="fas fa-shopping-cart text-gray-700 text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ cart_count or 0 }}</span>
+                    </a>
+                    
+                    <!-- User Menu -->
+                    <div class="hidden md:flex items-center space-x-3">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                        <span class="text-gray-300">|</span>
+                        <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" class="text-gray-700">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Menu -->
+            <div id="mobile-menu" class="hidden md:hidden mt-4 pb-4">
+                <div class="flex flex-col space-y-3">
+                    <form action="{{ url_for('search') }}" method="get" class="flex items-center bg-gray-100 rounded-lg px-3 py-2">
+                        <i class="fas fa-search text-gray-400 mr-2"></i>
+                        <input name="q" value="{{ search_query or '' }}" type="text" placeholder="Tìm kiếm sản phẩm..." class="bg-transparent outline-none text-sm w-full" />
+                    </form>
+                    <a href="{{ url_for('home') }}" class="text-gray-700 py-2">Trang chủ</a>
+                    <a href="{{ url_for('products_by_category', category='giay') }}" class="text-gray-700 py-2">Giày</a>
+                    <a href="{{ url_for('products_by_category', category='dep') }}" class="text-gray-700 py-2">Dép</a>
+                    <a href="{{ url_for('contact') }}" class="text-gray-700 py-2">Liên hệ</a>
+                    <div class="pt-3 border-t">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 py-2 block">Đăng nhập</a>
+                        <a href="{{ url_for('dangky') }}" class="text-gray-700 py-2 block">Đăng ký</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'success' if category == 'success' else 'error' }} mb-4 p-4 rounded-lg border-l-4 {{ 'bg-green-50 border-green-500 text-green-700' if category == 'success' else 'bg-red-50 border-red-500 text-red-700' }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} mr-2"></i>
+                        {{ message }}
+                        <button onclick="this.parentElement.remove()" class="float-right">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main>
+        {% if search_query %}
+        <div class="container mx-auto px-4 pt-8">
+            <p class="text-sm text-gray-600">Kết quả tìm kiếm cho "<span class="font-semibold">{{ search_query }}</span>": <span class="font-medium">{{ products|length }}</span> sản phẩm</p>
+        </div>
+        {% endif %}
+        <!-- Hero Section -->
+        {% if not search_query %}
+        <section class="container mx-auto px-4 py-12">
+            <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <!-- Left Content -->
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="w-2 h-8 bg-orange-500 mr-3"></div>
+                        <p class="text-gray-600 text-sm">Hot Sale - Giảm giá sốc</p>
+                    </div>
+                    
+                    <h1 class="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+                        Bộ sưu tập<br>
+                        <span class="text-gray-800">Giày & Dép</span><br>
+                        <span class="text-gray-700">cao cấp</span>
+                    </h1>
+                    
+                    <p class="text-gray-600 mb-8 text-lg">
+                        Khám phá những mẫu giày và dép thời trang mới nhất<br>
+                        với chất lượng tốt nhất và giá cả hợp lý.
+                    </p>
+                    
+                    <div class="flex space-x-4 mb-12">
+                        <button class="bg-black text-white px-8 py-3 rounded-lg font-semibold hover:bg-gray-800 transition">
+                            Mua ngay
+                        </button>
+                        <button class="border border-gray-300 text-gray-700 px-8 py-3 rounded-lg font-semibold hover:bg-gray-50 transition">
+                            Xem bộ sưu tập
+                        </button>
+                    </div>
+                    
+                    <!-- Stats -->
+                    <div class="grid grid-cols-3 gap-8">
+                        <div>
+                            <div class="text-3xl font-bold text-gray-900">1000+</div>
+                            <div class="text-sm text-gray-600">Sản phẩm</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-gray-900">5000+</div>
+                            <div class="text-sm text-gray-600">Khách hàng</div>
+                        </div>
+                        <div>
+                            <div class="text-3xl font-bold text-gray-900">4.8★</div>
+                            <div class="text-sm text-gray-600">Đánh giá</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Content - Hero Images -->
+                <div class="relative">
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- Main Image -->
+                        <div class="col-span-2 mb-4">
+                            <div class="bg-orange-400 rounded-2xl p-8 relative overflow-hidden">
+                                <img src="https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                     alt="Giày thể thao" 
+                                     class="w-full h-48 object-cover rounded-lg">
+                            </div>
+                        </div>
+                        
+                        <!-- Secondary Images -->
+                        <div class="bg-gray-200 rounded-2xl p-6 flex items-center justify-center h-32">
+                            <img src="https://images.unsplash.com/photo-1551107696-a4b0c5a0d9a2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="Giày sneaker" 
+                                 class="w-full h-full object-cover rounded-lg">
+                        </div>
+                        
+                        <div class="bg-black rounded-2xl p-6 flex items-center justify-center h-32">
+                            <img src="https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                                 alt="Giày chạy bộ" 
+                                 class="w-full h-full object-cover rounded-lg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- Featured Products Section -->
+        <section class="container mx-auto px-4 py-16">
+            {% if search_query %}
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Kết quả tìm kiếm</h2>
+                    <p class="text-gray-600">Tìm thấy {{ products|length }} sản phẩm phù hợp với "{{ search_query }}"</p>
+                </div>
+            {% else %}
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl font-bold text-gray-900 mb-4">Sản phẩm nổi bật</h2>
+                    <p class="text-gray-600 max-w-2xl mx-auto">
+                        Khám phá bộ sưu tập giày dép đa dạng với nhiều thương hiệu nổi tiếng và xu hướng thời trang mới nhất
+                    </p>
+                </div>
+            {% endif %}
+
+            <!-- Category Filter -->
+            {% if not search_query %}
+            <div class="flex justify-center mb-8">
+                <div class="bg-gray-100 rounded-lg p-1 flex space-x-1">
+                    <a href="{{ url_for('home') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if not current_category else 'text-gray-600 hover:bg-white' }}">Tất cả</a>
+                    <a href="{{ url_for('products_by_category', category='giay') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if current_category=='giay' else 'text-gray-600 hover:bg-white' }}">Giày</a>
+                    <a href="{{ url_for('products_by_category', category='dep') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if current_category=='dep' else 'text-gray-600 hover:bg-white' }}">Dép</a>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Sort Options -->
+            <div class="flex justify-between items-center mb-8">
+                <p class="text-gray-600">Hiển thị {{ products|length }} sản phẩm</p>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">Sắp xếp:</span>
+                    <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                        <option>Theo thứ tự</option>
+                        <option>Giá cao đến thấp</option>
+                        <option>Giá thấp đến cao</option>
+                        <option>Mới nhất</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+                {% for product in products %}
+                <!-- Product {{ product.id + 1 }} -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition group">
+                    <div class="relative bg-{{ 'orange-400' if product.id == 1 else 'purple-200' if product.id == 2 else 'blue-200' if product.id == 4 else 'black' if product.id == 7 else 'gray-100' }} p-6">
+                        {% if product.tag %}
+                        <span class="absolute top-3 left-3 bg-{{ 'orange-500' if product.tag == 'Sale' else 'red-500' if product.tag == 'Hot' else 'blue-500' if product.tag == 'New' else 'yellow-500' }} text-{{ 'black' if product.tag == 'Best' else 'white' }} px-2 py-1 text-xs rounded-full{{ ' font-semibold' if product.tag == 'Best' else '' }}">{{ product.tag }}</span>
+                        {% endif %}
+                        <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" loading="lazy" class="w-full h-48 object-cover group-hover:scale-105 transition rounded-lg">
+                    </div>
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ product.desc }}</p>
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="text-lg font-bold text-gray-900">{{ product.price }}</div>
+                            <div class="flex text-yellow-400">
+                                {% for i in range(product.rating) %}<i class="fas fa-star text-xs"></i>{% endfor %}
+                                {% for i in range(5 - product.rating) %}<i class="far fa-star text-xs"></i>{% endfor %}
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-500 mb-3">Size: {% for size in product.sizes %}{{ size }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
+                        <div class="flex space-x-2">
+                            <a href="{{ url_for('chitietsanpham', id=product.id) }}" class="flex-1 bg-gray-100 text-gray-700 text-center py-2 rounded-lg text-sm hover:bg-gray-200 transition">Chi tiết</a>
+                            <button type="button"
+                                    class="flex-1 bg-black text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition open-size-modal"
+                                    data-product-id="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-sizes="{{ product.sizes|join(',') }}">
+                                Thêm vào giỏ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Load More Button -->
+            <div class="text-center">
+                <button class="bg-gray-100 text-gray-700 px-8 py-3 rounded-lg hover:bg-gray-200 transition">
+                    Xem thêm sản phẩm
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- ShoeStore Info -->
+                <div>
+                    <h3 class="text-xl font-bold mb-4">ShoeStore</h3>
+                    <p class="text-gray-400 mb-4 text-sm">
+                        Cửa hàng giày dép uy tín số 1, phân phối toàn quốc với 1000+ sản phẩm đa dạng. Đường lưu thông sản phẩm minh bạch, hỗ trợ khách hàng tận tình.
+                    </p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="bg-blue-600 p-2 rounded hover:bg-blue-700">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="bg-pink-600 p-2 rounded hover:bg-pink-700">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="bg-blue-400 p-2 rounded hover:bg-blue-500">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Liên kết nhanh -->
+                <div>
+                    <h4 class="font-semibold mb-4">Liên kết nhanh</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="{{ url_for('home') }}" class="hover:text-white">Trang chủ</a></li>
+                        <li><a href="#" class="hover:text-white">Giày</a></li>
+                        <li><a href="#" class="hover:text-white">Dép</a></li>
+                        <li><a href="{{ url_for('contact') }}" class="hover:text-white">Liên hệ</a></li>
+                    </ul>
+                </div>
+
+                <!-- Hỗ trợ khách hàng -->
+                <div>
+                    <h4 class="font-semibold mb-4">Hỗ trợ khách hàng</h4>
+                    <ul class="space-y-2 text-gray-400 text-sm">
+                        <li><a href="#" class="hover:text-white">Chính sách đổi trả</a></li>
+                        <li><a href="#" class="hover:text-white">Hướng dẫn chọn size</a></li>
+                        <li><a href="#" class="hover:text-white">Phương thức thanh toán</a></li>
+                        <li><a href="#" class="hover:text-white">Giao hàng & vận chuyển</a></li>
+                        <li><a href="#" class="hover:text-white">Câu hỏi thường gặp</a></li>
+                    </ul>
+                </div>
+
+                <!-- Liên hệ -->
+                <div>
+                    <h4 class="font-semibold mb-4">Liên hệ</h4>
+                    <div class="space-y-2 text-gray-400 text-sm">
+                        <p><i class="fas fa-phone mr-2"></i>1900 xxx</p>
+                        <p><i class="fas fa-envelope mr-2"></i>info@shoestore.com</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>123 Đường ABC, Quận 1, TP.HCM</p>
+                    </div>
+                    
+                    <div class="mt-6">
+                        <h5 class="font-semibold mb-2">Đăng ký nhận tin</h5>
+                        <p class="text-gray-400 text-xs mb-3">Nhận thông báo sản phẩm mới và khuyến mãi đặc biệt</p>
+                        <form class="flex">
+                            <input type="email" placeholder="Email của bạn" 
+                                   class="flex-1 px-3 py-2 bg-gray-700 text-white text-sm rounded-l-lg focus:outline-none">
+                            <button type="submit" 
+                                    class="bg-orange-500 px-4 py-2 rounded-r-lg hover:bg-orange-600 transition">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-400 text-sm">
+                <p>&copy; 2025 ShoeStore. Tất cả quyền được bảo lưu. | Điều khoản sử dụng | Chính sách bảo mật | Cookie</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal chọn size -->
+    <div id="sizeModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-50">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
+            <button id="closeSizeModal" class="absolute top-3 right-3 text-gray-400 hover:text-gray-600"><i class="fas fa-times"></i></button>
+            <h3 id="modalProductName" class="text-lg font-semibold text-gray-900 mb-4">Chọn size</h3>
+            <div id="sizeOptions" class="flex flex-wrap gap-2 mb-6"></div>
+            <div class="flex justify-end space-x-3">
+                <button id="cancelSizeBtn" class="px-4 py-2 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200">Hủy</button>
+                <button id="confirmAddCart" class="px-5 py-2 text-sm rounded-lg bg-black text-white hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed" disabled>Thêm vào giỏ</button>
+            </div>
+            <form id="addCartForm" action="{{ url_for('add_to_giohang') }}" method="post" class="hidden">
+                <input type="hidden" name="product_id" id="formProductId">
+                <input type="hidden" name="size" id="formProductSize">
+                <input type="hidden" name="quantity" value="1">
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Search functionality (giữ Enter submit form)
+        // Bỏ lắng nghe cũ nếu còn
+        (function(){
+            const modal = document.getElementById('sizeModal');
+            const sizeOptions = document.getElementById('sizeOptions');
+            const modalName = document.getElementById('modalProductName');
+            const form = document.getElementById('addCartForm');
+            const formPid = document.getElementById('formProductId');
+            const formSize = document.getElementById('formProductSize');
+            const confirmBtn = document.getElementById('confirmAddCart');
+            const closeBtn = document.getElementById('closeSizeModal');
+            const cancelBtn = document.getElementById('cancelSizeBtn');
+            let selectedBtn = null;
+
+            function openModal(pid, name, sizes){
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                modalName.textContent = 'Chọn size - ' + name;
+                sizeOptions.innerHTML = '';
+                confirmBtn.disabled = true;
+                selectedBtn = null;
+                sizes.forEach(sz => {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.textContent = sz;
+                    b.className = 'px-4 py-2 rounded-lg border text-sm bg-white hover:bg-black hover:text-white transition';
+                    b.addEventListener('click', ()=>{
+                        if(selectedBtn){selectedBtn.classList.remove('!bg-black','!text-white');}
+                        selectedBtn = b;
+                        b.classList.add('!bg-black','!text-white');
+                        formSize.value = sz;
+                        confirmBtn.disabled = false;
+                    });
+                    sizeOptions.appendChild(b);
+                });
+                formPid.value = pid;
+            }
+            function closeModal(){
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+            document.querySelectorAll('.open-size-modal').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const pid = btn.getAttribute('data-product-id');
+                    const name = btn.getAttribute('data-product-name');
+                    const sizes = (btn.getAttribute('data-product-sizes')||'').split(',').map(s=>s.trim()).filter(Boolean);
+                    openModal(pid, name, sizes);
+                });
+            });
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+            confirmBtn.addEventListener('click', ()=>{ if(!confirmBtn.disabled){ form.submit(); closeModal(); }});
+            modal.addEventListener('click', e=>{ if(e.target === modal) closeModal(); });
+            document.addEventListener('keydown', e=>{ if(e.key === 'Escape' && !modal.classList.contains('hidden')) closeModal(); });
+        })();
+    </script>
+</body>
+</html>
