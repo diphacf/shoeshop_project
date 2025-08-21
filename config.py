@@ -1,10 +1,9 @@
-import mysql.connector
+import os
 
-def get_db_connection():
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password="369024",
-        database="shoeshop_db"
-    )
-    return conn
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", "369024"),
+    "database": os.getenv("DB_NAME", "shoestore"),
+    "port": int(os.getenv("DB_PORT", "3306")),
+}
