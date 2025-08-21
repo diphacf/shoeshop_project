@@ -1,12 +1,15 @@
 from flask import Flask
-from db import mysql, init_app
+from flask_cors import CORS
 
+# Tạo app Flask
 app = Flask(__name__)
-init_app(app)
+CORS(app)
 
-@app.route('/')
-def home():
-    return "Hệ thống bán giày đang hoạt động!"
+# Import routes
+from routes import user_routes, product_routes, order_routes
+app.register_blueprint(user_routes.bp, url_prefix="/api/users")
+app.register_blueprint(product_routes.bp, url_prefix="/api/products")
+app.register_blueprint(order_routes.bp, url_prefix="/api/orders")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run(debug=True)
