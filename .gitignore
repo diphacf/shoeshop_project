@@ -1,20 +1,65 @@
-# Python
+# Virtual environment
+venv/
+ENV/
+env/
+*.pyc
 __pycache__/
-*.py[cod]
 *.pyo
 *.pyd
+*.pdb
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dll
+*.dylib
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
 *.egg-info/
-.env
-.env.*
+.installed.cfg
+*.egg
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Flask specific
 instance/
+*.db
+*.sqlite3
 
-# Virtual env
-venv/
+# Environment variables
+.env
+*.env
 
-# VSCode / IDE
+# Logs
+*.log
+
+# VSCode settings
 .vscode/
 .idea/
 
-# OS
+# Mac / Windows specific
 .DS_Store
 Thumbs.db
