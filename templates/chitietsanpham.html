@@ -106,30 +106,30 @@
             <!-- Product Images -->
             <div class="space-y-4">
                 <!-- Main Image -->
-                <div class="bg-white rounded-2xl p-8 shadow-sm">
-                    <img id="mainImage" src="{{ product.img }}" alt="{{ product.name }}" 
-                         class="w-full h-96 object-cover rounded-lg hover:scale-105 transition-transform duration-300">
-                </div>
+             <div class="bg-white rounded-2xl p-8 shadow-sm">
+                <img id="mainImage" src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                    class="w-full h-96 object-cover rounded-lg hover:scale-105 transition-transform duration-300">
+             </div>
                 
                 <!-- Thumbnail Images -->
                 <div class="grid grid-cols-4 gap-3">
-                    <div class="bg-white rounded-lg p-3 border-2 border-orange-500 cursor-pointer">
-                        <img src="{{ product.img }}" alt="{{ product.name }}" 
-                             class="w-full h-20 object-cover rounded">
-                    </div>
-                    <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
-                        <img src="{{ product.img }}" alt="{{ product.name }}" 
-                             class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
-                    </div>
-                    <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
-                        <img src="{{ product.img }}" alt="{{ product.name }}" 
-                             class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
-                    </div>
-                    <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
-                        <img src="{{ product.img }}" alt="{{ product.name }}" 
-                             class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
-                    </div>
+                <div class="bg-white rounded-lg p-3 border-2 border-orange-500 cursor-pointer">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded">
                 </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+             </div>
             </div>
 
             <!-- Product Info -->

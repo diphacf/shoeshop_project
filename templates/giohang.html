@@ -129,8 +129,8 @@
                                 <div class="flex items-center space-x-4">
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
-                                        <img src="{{ item.img }}" alt="{{ item.name }}" 
-                                             class="w-20 h-20 object-cover rounded-lg">
+                                <img src="{{ get_image_path(get_product_by_id(item.product_id)) }}" alt="{{ item.name }}" 
+                                    class="w-20 h-20 object-cover rounded-lg">
                                     </div>
                                     
                                     <!-- Product Info -->

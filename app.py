@@ -241,13 +241,20 @@ def _assign_local_image_names():
 
 _assign_local_image_names()
 
+# Manual overrides for specific products where the automatic slug doesn't match the stored filenames
+# e.g. 'Dép Sandal Đỏ Trắt' should map to the existing file 'dep-sandal-do-trat.jpg'
+for p in PRODUCTS:
+    if p.get('name') == 'Dép Sandal Đỏ Trắt':
+        p['img_local'] = 'dep-sandal-do-trat.jpg'
+
 # ==== IMAGE RESOLUTION (no lru_cache, always re-check existence) ====
 # Gỡ bỏ @lru_cache để thay đổi file hệ thống được nhận ngay
 
 def get_image_path(product):
+    # 1) Prefer the computed local image name (img_local)
     fname = product.get('img_local')
     if fname:
-        local_path = os.path.join(app.root_path, 'static', 'images', fname)
+        local_path = os.path.join(str(app.root_path), 'static', 'images', fname)
         if os.path.isfile(local_path):
             # cache-busting bằng mtime để trình duyệt tải lại khi bạn thay ảnh
             try:
@@ -255,6 +262,19 @@ def get_image_path(product):
             except Exception:
                 mtime = 0
             return url_for('static', filename=f'images/{fname}', v=mtime)
+
+    # 2) If product['img'] is a local filename (not http or absolute), check it too
+    img_field = product.get('img') or ''
+    if isinstance(img_field, str) and not img_field.startswith('http') and not img_field.startswith('/'):
+        local_path2 = os.path.join(str(app.root_path), 'static', 'images', img_field)
+        if os.path.isfile(local_path2):
+            try:
+                mtime = int(os.path.getmtime(local_path2))
+            except Exception:
+                mtime = 0
+            return url_for('static', filename=f'images/{img_field}', v=mtime)
+
+    # Fallback to the original value (could be external URL)
     return product.get('img')
 
 app.jinja_env.globals['get_image_path'] = get_image_path
@@ -265,10 +285,11 @@ def debug_images():
     rows = []
     for p in PRODUCTS:
         fname = p.get('img_local')
-        local_path = os.path.join(app.root_path, 'static', 'images', fname)
+        local_path = os.path.join(str(app.root_path), 'static', 'images', fname)
         exists = os.path.isfile(local_path)
         rows.append({ 'id': p['id'], 'name': p['name'], 'img_local': fname, 'exists': exists })
-    return {'images': rows, 'static_dir': os.path.join(app.root_path, 'static', 'images')}
+
+    return {'images': rows, 'static_dir': os.path.join(str(app.root_path), 'static', 'images')}
 
 def get_product_by_id(product_id):
     """Lấy sản phẩm theo ID"""
@@ -276,6 +297,9 @@ def get_product_by_id(product_id):
         if product['id'] == int(product_id):
             return product
     return None
+
+# Expose helper to templates so cart can resolve full product objects
+app.jinja_env.globals['get_product_by_id'] = get_product_by_id
 
 def get_cart_items():
     """Lấy danh sách sản phẩm trong giỏ hàng"""
@@ -304,7 +328,7 @@ def add_to_cart(product_id, size=None, quantity=1):
         'name': product['name'],
         'price': product['price'],
         'price_num': product['price_num'],
-        'img': product['img'],
+    'img': get_image_path(product),
         'size': size,
         'quantity': int(quantity)
     }
