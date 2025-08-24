@@ -14,7 +14,6 @@ app.register_blueprint(product_bp, url_prefix="/api/products")
 app.register_blueprint(user_bp, url_prefix="/api/users")
 app.register_blueprint(order_bp, url_prefix="/api/orders")
 
-# ================== HÀM XỬ LÝ DB ==================
 def get_products():
     db = get_db()
     cursor = db.cursor(dictionary=True)
@@ -39,7 +38,6 @@ def get_products_by_category(category):
     cursor.close()
     return products
 
-# ================== ROUTES FRONTEND ==================
 @app.route('/')
 def index():
     products = get_products()
@@ -63,6 +61,40 @@ def chitietsanpham(product_id):
         return redirect(url_for('home'))
     return render_template('chitietsanpham.html', product=product)
 
+@app.route('/search')
+def search():
+    q = request.args.get('q', '').strip()
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    if q:
+        cursor.execute("SELECT * FROM products WHERE name LIKE %s OR description LIKE %s", (f"%{q}%", f"%{q}%"))
+        products = cursor.fetchall()
+    else:
+        cursor.execute("SELECT * FROM products")
+        products = cursor.fetchall()
+    cursor.close()
+    return render_template('home.html', products=products, search_query=q)
+
+@app.route('/dangky')
+def dangky():
+    return render_template('dangky.html')
+
+@app.route('/dangky/submit', methods=['POST'])
+def dangky_submit():
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+    if password != confirm_password:
+        flash('Mật khẩu xác nhận không khớp!', 'error')
+        return redirect(url_for('dangky'))
+    if username and email and password:
+        flash(f'Đăng ký thành công! Chào mừng {username}', 'success')
+        return redirect(url_for('login'))
+    else:
+        flash('Vui lòng điền đầy đủ thông tin!', 'error')
+        return redirect(url_for('dangky'))
+
 @app.route('/login')
 def login():
     return render_template('login.html')
@@ -71,35 +103,12 @@ def login():
 def login_submit():
     username = request.form.get('username')
     password = request.form.get('password')
-    # Xử lý đăng nhập đơn giản (cần kết nối DB thật)
     if username and password:
         flash(f'Đăng nhập thành công! Chào mừng {username}', 'success')
         return redirect(url_for('home'))
     else:
         flash('Tên đăng nhập hoặc mật khẩu không đúng!', 'error')
         return redirect(url_for('login'))
-
-@app.route('/register')
-def register():
-    return render_template('dangky.html')
-
-@app.route('/register/submit', methods=['POST'])
-def register_submit():
-    fullname = request.form.get('fullname')
-    email = request.form.get('email')
-    phone = request.form.get('phone')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm-password')
-    if fullname and email and phone and password and confirm_password:
-        if password == confirm_password:
-            flash(f'Đăng ký thành công! Chào mừng {fullname} đến với ShoeStore!', 'success')
-            return redirect(url_for('login'))
-        else:
-            flash('Mật khẩu xác nhận không khớp!', 'error')
-            return redirect(url_for('register'))
-    else:
-        flash('Vui lòng điền đầy đủ thông tin!', 'error')
-        return redirect(url_for('register'))
 
 @app.route('/logout')
 def logout():
@@ -121,7 +130,6 @@ def contact_submit():
     flash(f'Cảm ơn {first_name} {last_name}! Chúng tôi đã nhận được tin nhắn của bạn.', 'success')
     return redirect(url_for('contact'))
 
-# ================== GIỎ HÀNG ĐƠN GIẢN (session) ==================
 def get_cart_items():
     return session.get("cart", [])
 
