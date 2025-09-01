@@ -9,7 +9,7 @@
     <ul class="auth-links">
       <li><a href="{{ url_for('home') }}">Trang chủ</a></li>
       <li><a href="{{ url_for('giohang') }}">Giỏ hàng</a></li>
-      <li><a class="active" href="{{ url_for('register') }}">Đăng ký</a></li>
+      <li><a class="active" href="{{ url_for('dangky') }}">Đăng ký</a></li>
       <li><a href="{{ url_for('login') }}">Đăng nhập</a></li>
     </ul>
   </nav>
@@ -112,7 +112,7 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
         <h2>Đăng Ký</h2>
         <p>Nhập thông tin để tạo tài khoản của bạn.</p>
       </div>
-      <form id="registerForm" action="{{ url_for('register_submit') }}" method="POST" novalidate>
+      <form id="registerForm" action="{{ url_for('dangky_submit') }}" method="POST" novalidate>
         <div class="form-grid">
           <div class="form-group">
             <label for="fullname"><i class="fas fa-user"></i> Họ tên</label>
@@ -193,5 +193,38 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
  email.addEventListener('input',()=>{const v=email.value.trim();const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);mark(email,ok?'Email hợp lệ':'Email không hợp lệ',ok)});
  password.addEventListener('input',()=>{const sc=strength(password.value);mark(password,sc>=3?'Mật khẩu ổn':'Yếu - thêm ký tự & ký hiệu',sc>=3);if(confirmPassword.value)confirmPassword.dispatchEvent(new Event('input'));});
  confirmPassword.addEventListener('input',()=>{const ok=password.value&&confirmPassword.value===password.value;mark(confirmPassword,ok?'Khớp':'Không khớp',ok)});
- form.addEventListener('submit',e=>{e.preventDefault();let valid=true;[fullname,phone,email,password,confirmPassword].forEach(i=>{if(!i.value.trim())valid=false});if(fullname.value.trim().length<3)valid=false;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value))valid=false;if(!/^[0-9]{10,11}$/.test(phone.value))valid=false;if(strength(password.value)<3)valid=false;if(password.value!==confirmPassword.value)valid=false;if(!terms.checked)valid=false;if(!valid){showToast('Vui lòng kiểm tra lại thông tin','error');return;}btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.innerHTML='<span class="loading-spinner"></span> Đang xử lý...';setTimeout(()=>{btn.innerHTML='<i class="fas fa-check"></i> Thành công';showToast('Tạo tài khoản thành công!','success');setTimeout(()=>{window.location.href='{{ url_for("login") }}'},1400)},1600);setTimeout(()=>{btn.disabled=false;},2600);});})();</script>
+ form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  // disable button + loading
+  btn.disabled = true;
+  btn.dataset.original = btn.innerHTML;
+  btn.innerHTML = '<span class="loading-spinner"></span> Đang xử lý...';
+
+  const formData = new FormData(form);
+
+  try {
+    const res = await fetch("/dangky/submit", {
+      method: "POST",
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      showToast(data.message, "success");
+
+      setTimeout(() => {
+        window.location.href = "/login";   // chuyển sang login sau 2s
+      }, 2000);
+    } else {
+      showToast(data.message, "error");
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.original;
+    }
+  } catch (err) {
+    showToast("Có lỗi kết nối server!", "error");
+    btn.disabled = false;
+    btn.innerHTML = btn.dataset.original;
+  }
+ });})();</script>
 {% endblock %}

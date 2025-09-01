@@ -12,7 +12,7 @@
     <ul class="auth-links">
       <li><a href="{{ url_for('home') }}">Trang chủ</a></li>
       <li><a href="{{ url_for('giohang') }}">Giỏ hàng</a></li>
-      <li><a href="{{ url_for('register') }}">Đăng ký</a></li>
+      <li><a href="{{ url_for('dangky') }}">Đăng ký</a></li>
       <li><a class="active" href="{{ url_for('login') }}">Đăng nhập</a></li>
     </ul>
   </nav>
@@ -196,11 +196,21 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
             <small style="opacity:.55;font-weight:500;letter-spacing:.05em;color:var(--txt-dim)">© 2025 ShoeStore</small>
         </div>
         <div class="login-form-side">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+             {% if messages %}
+              {% for category, message in messages %}
+                <div class="inline-toast" style="position:relative;margin-bottom:12px;">
+                 <i class="fas {% if category=='success' %}fa-check-circle{% else %}fa-exclamation-triangle{% endif %}"></i>
+                 {{ message }}
+                </div>
+              {% endfor %}
+             {% endif %}
+            {% endwith %}
             <div class="form-header">
                 <h2>Đăng Nhập</h2>
                 <p>Nhập thông tin để tiếp tục phiên làm việc.</p>
             </div>
-            <form id="loginForm" novalidate>
+            <form id="loginForm" method="POST" action="{{ url_for('login_submit') }}">
                 <div class="form-group">
                     <label for="email"><i class="fas fa-envelope"></i>Email</label>
                     <div class="input-shell">
@@ -231,7 +241,7 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
                     <button type="button" class="social-btn" data-social="google"><i class="fab fa-google"></i> Google</button>
                     <button type="button" class="social-btn" data-social="facebook"><i class="fab fa-facebook-f"></i> Facebook</button>
                 </div>
-                <div class="alt-box">Chưa có tài khoản? <a href="{{ url_for('register') }}">Tạo tài khoản mới</a></div>
+                <div class="alt-box">Chưa có tài khoản? <a href="{{ url_for('dangky') }}">Tạo tài khoản mới</a></div>
             </form>
         </div>
     </div>
@@ -243,36 +253,64 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
     const password = document.getElementById('password');
     const btn = document.getElementById('loginBtn');
     const togglePassword = document.getElementById('togglePassword');
-    const goRegister=document.getElementById('goRegisterBtn');
 
-    function showToast(msg,type='info'){
+    // Toast function giống đăng ký
+    function showToast(msg, type='info'){
         document.querySelectorAll('.inline-toast').forEach(t=>t.remove());
         const wrap=document.createElement('div');
         wrap.className='inline-toast';
-        wrap.style.cssText='position:fixed;top:26px;right:26px;z-index:9999;display:flex;align-items:center;gap:.85rem;background:rgba(20,22,27,.92);color:#fff;padding:.95rem 1.15rem;border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(14px);box-shadow:0 14px 38px -12px rgba(0,0,0,.75);font-weight:600;animation:toastIn .55s var(--transition)';
+        wrap.style.cssText='position:fixed;top:26px;right:26px;z-index:9999;display:flex;align-items:center;gap:.85rem;background:#111;color:#fff;padding:.95rem 1.15rem;border:1px solid #222;border-radius:18px;font-weight:600;animation:toastIn .45s var(--transition)';
         const icons={success:'fa-check-circle',error:'fa-exclamation-triangle',info:'fa-info-circle'};
-        wrap.innerHTML=`<i class="fas ${icons[type]||icons.info}" style="color:${type==='success'?'#22c55e':type==='error'?'#ef4444':'#e5e7eb'};font-size:1.05rem"></i><span style="font-size:.85rem">${msg}</span><button style='background:rgba(255,255,255,.08);border:1px solid var(--border);color:#fff;padding:.4rem .65rem;border-radius:10px;cursor:pointer;font-size:.6rem;font-weight:600;letter-spacing:.12em'>ĐÓNG</button>`;
+        wrap.innerHTML=`<i class="fas ${icons[type]||icons.info}" style="font-size:1.05rem"></i>
+                        <span style="font-size:.85rem">${msg}</span>
+                        <button style='background:rgba(255,255,255,.08);border:1px solid #222;color:#fff;padding:.4rem .65rem;border-radius:10px;cursor:pointer;font-size:.6rem;font-weight:600;letter-spacing:.12em'>ĐÓNG</button>`;
         wrap.querySelector('button').onclick=()=>wrap.remove();
-        document.body.appendChild(wrap);setTimeout(()=>{wrap.style.animation='toastOut .45s forwards';setTimeout(()=>wrap.remove(),420)},4200);
+        document.body.appendChild(wrap);
+        setTimeout(()=>{wrap.style.animation='toastOut .4s forwards'; setTimeout(()=>wrap.remove(),380)},4200);
     }
-    const toastKF=document.createElement('style');toastKF.textContent='@keyframes toastIn{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes toastOut{to{transform:translateY(-10px);opacity:0}}';document.head.appendChild(toastKF);
+    const toastKF=document.createElement('style');
+    toastKF.textContent='@keyframes toastIn{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}@keyframes toastOut{to{transform:translateY(-10px);opacity:0}}';
+    document.head.appendChild(toastKF);
 
-    togglePassword.addEventListener('click',()=>{const type=password.type==='password'?'text':'password';password.type=type;togglePassword.firstElementChild.classList.toggle('fa-eye');togglePassword.firstElementChild.classList.toggle('fa-eye-slash');});
-
-    function validateEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}    
-
-    form.addEventListener('submit',e=>{
-        e.preventDefault();email.classList.remove('error-shake');password.classList.remove('error-shake');
-        const ev=email.value.trim();const pv=password.value.trim();
-        if(!ev){email.classList.add('error-shake');showToast('Vui lòng nhập email','error');return}
-        if(!validateEmail(ev)){email.classList.add('error-shake');showToast('Email không hợp lệ','error');return}
-        if(!pv){password.classList.add('error-shake');showToast('Vui lòng nhập mật khẩu','error');return}
-        if(pv.length<6){password.classList.add('error-shake');showToast('Mật khẩu tối thiểu 6 ký tự','error');return}
-        btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.innerHTML='<span class="loading-spinner"></span> Đang xử lý...';
-        setTimeout(()=>{btn.innerHTML='<i class="fas fa-check"></i> Thành công';btn.style.background='linear-gradient(90deg,#ffffff,#9ca3af,#ffffff)';showToast('Đăng nhập thành công!','success');setTimeout(()=>{window.location.href='{{ url_for("home") }}'},1200)},1500);
-        setTimeout(()=>{btn.disabled=false;},2400);
+    // Hiện/ẩn mật khẩu
+    togglePassword.addEventListener('click',()=>{
+        const t=password.type==='password'?'text':'password';
+        password.type=t;
+        togglePassword.firstElementChild.classList.toggle('fa-eye');
+        togglePassword.firstElementChild.classList.toggle('fa-eye-slash');
     });
-    goRegister.addEventListener('click',()=>{window.location.href='{{ url_for("register") }}';});
+
+    form.addEventListener('submit', async (e)=>{
+        e.preventDefault();
+
+        // disable button + loading
+        btn.disabled = true;
+        btn.dataset.original = btn.innerHTML;
+        btn.innerHTML = '<span class="loading-spinner"></span> Đang xử lý...';
+
+        const formData = new FormData(form);
+
+        try {
+            const res = await fetch("{{ url_for('login_submit') }}", {
+                method: "POST",
+                body: formData
+            });
+            const data = await res.json();
+
+            if(data.success){
+                showToast(data.message || "Đăng nhập thành công!", "success");
+                setTimeout(()=>window.location.href = "{{ url_for('home') }}", 2000);
+            } else {
+                showToast(data.message || "Email hoặc mật khẩu không đúng!", "error");
+                btn.disabled = false;
+                btn.innerHTML = btn.dataset.original;
+            }
+        } catch(err){
+            showToast("Có lỗi kết nối server!", "error");
+            btn.disabled = false;
+            btn.innerHTML = btn.dataset.original;
+        }
+    });
 })();
 </script>
 {% endblock %}

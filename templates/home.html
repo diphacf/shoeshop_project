@@ -56,9 +56,14 @@
                     
                     <!-- User Menu -->
                     <div class="hidden md:flex items-center space-x-3">
-                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
-                        <span class="text-gray-300">|</span>
-                        <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% if session.get('user_id') %}
+                            <span class="text-gray-700">Xin chào, {{ session.get('user_name') or 'User' }}</span>
+                            <a href="{{ url_for('logout') }}" class="text-gray-700 hover:text-gray-900">Đăng xuất</a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% endif %}
                     </div>
                 </div>
 
@@ -236,7 +241,6 @@
             <!-- Products Grid -->
             <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
                 {% for product in products %}
-                <!-- Product {{ product.id + 1 }} -->
                 <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition group">
                     <div class="relative bg-{{ 'orange-400' if product.id == 1 else 'purple-200' if product.id == 2 else 'blue-200' if product.id == 4 else 'black' if product.id == 7 else 'gray-100' }} p-6">
                         {% if product.tag %}
@@ -245,18 +249,18 @@
                         <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" loading="lazy" class="w-full h-48 object-cover group-hover:scale-105 transition rounded-lg">
                     </div>
                     <div class="p-4">
-                        <h3 class="font-semibold text-gray-900 mb-2">{{ product.name }}</h3>
-                        <p class="text-sm text-gray-600 mb-3">{{ product.desc }}</p>
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ product.product_name }}</h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ product.description }}</p>
                         <div class="flex items-center justify-between mb-3">
                             <div class="text-lg font-bold text-gray-900">{{ product.price }}</div>
                             <div class="flex text-yellow-400">
-                                {% for i in range(product.rating) %}<i class="fas fa-star text-xs"></i>{% endfor %}
-                                {% for i in range(5 - product.rating) %}<i class="far fa-star text-xs"></i>{% endfor %}
+                                {% for i in range(product.rating | default(0, true)) %}<i class="fas fa-star text-xs"></i>{% endfor %}
+                                {% for i in range(5 - product.rating | default(0, true)) %}<i class="far fa-star text-xs"></i>{% endfor %}
                             </div>
                         </div>
-                        <div class="text-xs text-gray-500 mb-3">Size: {% for size in product.sizes %}{{ size }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
+                        <div class="text-xs text-gray-500 mb-3">Size: {% for size in product.sizes | default([], true) %}{{ size }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
                         <div class="flex space-x-2">
-                            <a href="{{ url_for('chitietsanpham', id=product.id) }}" class="flex-1 bg-gray-100 text-gray-700 text-center py-2 rounded-lg text-sm hover:bg-gray-200 transition">Chi tiết</a>
+                            <a href="{{ url_for('chitietsanpham', product_id=product.product_id) }}" class="flex-1 bg-gray-100 text-gray-700 text-center py-2 rounded-lg text-sm hover:bg-gray-200 transition">Chi tiết</a>
                             <button type="button"
                                     class="flex-1 bg-black text-white py-2 rounded-lg text-sm hover:bg-gray-800 transition open-size-modal"
                                     data-product-id="{{ product.id }}"

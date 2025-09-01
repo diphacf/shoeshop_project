@@ -1,9 +1,11 @@
-from flask import Flask, render_template, session, flash, redirect, url_for, request
+from flask import Flask, render_template, session, flash, redirect, url_for, request, jsonify
 from flask_cors import CORS
 from routes.product_routes import product_bp
 from routes.user_routes import user_bp
 from routes.order_routes import order_bp
 from db import get_db
+from werkzeug.security import generate_password_hash, check_password_hash
+import os
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.secret_key = 'your_secret_key'
@@ -81,16 +83,40 @@ def dangky():
 
 @app.route('/dangky/submit', methods=['POST'])
 def dangky_submit():
-    username = request.form.get('username')
+    fullname = request.form.get('fullname')
     email = request.form.get('email')
     password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
+    confirm_password = request.form.get('confirm-password')
+
     if password != confirm_password:
         flash('Mật khẩu xác nhận không khớp!', 'error')
         return redirect(url_for('dangky'))
-    if username and email and password:
-        flash(f'Đăng ký thành công! Chào mừng {username}', 'success')
-        return redirect(url_for('login'))
+    
+    if fullname and email and password:
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+
+            # kiểm tra email trùng lặp
+            cursor.execute("SELECT user_id FROM users WHERE email = %s", (email,))
+            if cursor.fetchone():
+                flash('Email đã được sử dụng!', 'error')
+                return redirect(url_for('dangky'))
+
+            hashed_pw = generate_password_hash(password)
+
+            cursor.execute(
+                "INSERT INTO users (full_name, email, password_hash) VALUES (%s, %s, %s)",
+                (fullname, email, hashed_pw)
+            )
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+            return jsonify({"success": True, "message": "Đăng ký thành công!"})
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Lỗi: {str(e)}"})
     else:
         flash('Vui lòng điền đầy đủ thông tin!', 'error')
         return redirect(url_for('dangky'))
@@ -101,17 +127,38 @@ def login():
 
 @app.route('/login/submit', methods=['POST'])
 def login_submit():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    if username and password:
-        flash(f'Đăng nhập thành công! Chào mừng {username}', 'success')
-        return redirect(url_for('home'))
-    else:
-        flash('Tên đăng nhập hoặc mật khẩu không đúng!', 'error')
+    email = request.form.get('email', '').strip()
+    password = request.form.get('password', '').strip()
+    
+    if not email or not password:
+        flash('Vui lòng nhập đầy đủ thông tin!', 'error')
         return redirect(url_for('login'))
+    
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE email = %s LIMIT 1", (email,))
+        user = cursor.fetchone()
+
+        if user and check_password_hash(user["password_hash"], password):
+            session['user_id'] = user['user_id']
+            session['user_name'] = user['full_name']
+            return jsonify(success=True, message=f"Đăng nhập thành công! Chào mừng {user['full_name']}")
+        else:
+            return jsonify(success=False, message="Tên đăng nhập hoặc mật khẩu không đúng!")
+
+    except Exception as e:
+        return jsonify(success=False, message=f"Lỗi hệ thống: {str(e)}")
+
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 @app.route('/logout')
 def logout():
+    session.clear()  # xóa tất cả thông tin đăng nhập
     flash('Đã đăng xuất thành công!', 'success')
     return redirect(url_for('home'))
 
@@ -184,6 +231,35 @@ def clear_cart():
     session["cart"] = []
     flash('Đã xóa toàn bộ giỏ hàng!', 'success')
     return redirect(url_for('giohang'))
+
+def get_image_path(product):
+    # 1) Prefer the computed local image name (img_local)
+    fname = product.get('img_local')
+    if fname:
+        local_path = os.path.join(str(app.root_path), 'static', 'images', fname)
+        if os.path.isfile(local_path):
+            # cache-busting bằng mtime để trình duyệt tải lại khi bạn thay ảnh
+            try:
+                mtime = int(os.path.getmtime(local_path))
+            except Exception:
+                mtime = 0
+            return url_for('static', filename=f'images/{fname}', v=mtime)
+
+    # 2) If product['img'] is a local filename (not http or absolute), check it too
+    img_field = product.get('img') or ''
+    if isinstance(img_field, str) and not img_field.startswith('http') and not img_field.startswith('/'):
+        local_path2 = os.path.join(str(app.root_path), 'static', 'images', img_field)
+        if os.path.isfile(local_path2):
+            try:
+                mtime = int(os.path.getmtime(local_path2))
+            except Exception:
+                mtime = 0
+            return url_for('static', filename=f'images/{img_field}', v=mtime)
+
+    # Fallback to the original value (could be external URL)
+    return product.get('img')
+
+app.jinja_env.globals['get_image_path'] = get_image_path
 
 if __name__ == '__main__':
     app.run(debug=True)
