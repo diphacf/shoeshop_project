@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ShoeStore</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e293b;
+            --primary-dark: #0f172a;
+            --accent: #3b82f6;
+            --accent-dark: #1d4ed8;
+            --success: #10b981;
+            --error: #ef4444;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.03"><circle cx="30" cy="30" r="2"/></g></svg>');
+            pointer-events: none;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 450px;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .login-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 48px 40px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent) 0%, var(--accent-dark) 100%);
+        }
+
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .admin-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+        }
+
+        .admin-icon i {
+            font-size: 32px;
+            color: white;
+        }
+
+        .admin-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--gray-800);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .admin-subtitle {
+            color: var(--gray-600);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-600);
+            font-size: 18px;
+            z-index: 2;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 16px 16px 52px;
+            border: 2px solid var(--gray-200);
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 500;
+            background: var(--gray-50);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--accent);
+            background: var(--white);
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: var(--gray-600);
+            font-weight: 400;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 4px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .password-toggle:hover {
+            color: var(--accent);
+            background: var(--gray-100);
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
+        }
+
+        .login-button:active {
+            transform: translateY(0);
+        }
+
+        .login-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .back-home {
+            text-align: center;
+            margin-top: 32px;
+        }
+
+        .back-home a {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 12px;
+            transition: all 0.2s;
+        }
+
+        .back-home a:hover {
+            color: var(--accent);
+            background: var(--gray-100);
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #bbf7d0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 16px;
+            }
+            
+            .login-card {
+                padding: 32px 24px;
+            }
+            
+            .admin-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card fade-in">
+            <div class="admin-header">
+                <div class="admin-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h1 class="admin-title">Admin Panel</h1>
+                <p class="admin-subtitle">Đăng nhập vào hệ thống quản trị</p>
+            </div>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'error' if category == 'error' else 'success' }}">
+                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="adminLoginForm" method="POST" action="{{ url_for('admin_login_post') }}">
+                <div class="form-group">
+                    <label for="username" class="form-label">Tên đăng nhập</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-user input-icon"></i>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username" 
+                            class="form-input" 
+                            placeholder="Nhập tên đăng nhập"
+                            autocomplete="username"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password" class="form-label">Mật khẩu</label>
+                    <div class="input-wrapper">
+                        <i class="fas fa-lock input-icon"></i>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="form-input" 
+                            placeholder="Nhập mật khẩu"
+                            autocomplete="current-password"
+                            required
+                        >
+                        <button type="button" class="password-toggle" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-button" id="loginBtn">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Đăng nhập
+                </button>
+            </form>
+
+            <div class="back-home">
+                <a href="{{ url_for('home') }}">
+                    <i class="fas fa-arrow-left"></i>
+                    Quay về trang chủ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('adminLoginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordInput = document.getElementById('password');
+            const usernameInput = document.getElementById('username');
+
+            // Toggle password visibility
+            togglePassword.addEventListener('click', function() {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                const icon = this.querySelector('i');
+                icon.classList.toggle('fa-eye');
+                icon.classList.toggle('fa-eye-slash');
+            });
+
+            // Form submission
+            form.addEventListener('submit', function(e) {
+                const username = usernameInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!username || !password) {
+                    e.preventDefault();
+                    showError('Vui lòng điền đầy đủ thông tin!');
+                    return;
+                }
+
+                // Show loading state
+                loginBtn.disabled = true;
+                loginBtn.innerHTML = '<span class="loading-spinner"></span>Đang xử lý...';
+            });
+
+            function showError(message) {
+                // Remove existing alerts
+                document.querySelectorAll('.alert').forEach(alert => alert.remove());
+                
+                // Create new alert
+                const alert = document.createElement('div');
+                alert.className = 'alert alert-error';
+                alert.innerHTML = `
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message}
+                `;
+                
+                // Insert before form
+                form.parentNode.insertBefore(alert, form);
+                
+                // Add shake animation to inputs
+                usernameInput.classList.add('shake');
+                passwordInput.classList.add('shake');
+                
+                setTimeout(() => {
+                    usernameInput.classList.remove('shake');
+                    passwordInput.classList.remove('shake');
+                }, 500);
+            }
+
+            // Focus first input
+            usernameInput.focus();
+        });
+    </script>
+</body>
+</html>

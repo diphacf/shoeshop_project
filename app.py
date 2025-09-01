@@ -1,9 +1,45 @@
 from flask import Flask, flash, redirect, render_template, url_for, request, session
 import unicodedata
 import os
+from functools import wraps
+from admin_config import DEFAULT_ADMIN_CREDENTIALS, ADMIN_SESSION_TIMEOUT
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
+
+# Admin credentials (sử dụng từ config file)
+ADMIN_CREDENTIALS = DEFAULT_ADMIN_CREDENTIALS
+
+def admin_required(f):
+    """Decorator để yêu cầu đăng nhập admin"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'admin_logged_in' not in session or not session['admin_logged_in']:
+            flash('Vui lòng đăng nhập để truy cập trang admin!', 'error')
+            return redirect(url_for('admin_login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.before_request
+def check_admin_session():
+    """Kiểm tra session admin có hợp lệ không"""
+    admin_routes = ['admin', 'admin_get_product', 'admin_add_product', 'admin_edit_product', 'admin_delete_product', 'admin_v2']
+    
+    if request.endpoint in admin_routes:
+        if 'admin_logged_in' not in session or not session.get('admin_logged_in'):
+            if request.endpoint != 'admin_login':
+                return redirect(url_for('admin_login'))
+    
+    # Auto logout sau 2 giờ không hoạt động (tùy chọn)
+    # if 'admin_logged_in' in session and 'admin_last_activity' in session:
+    #     from datetime import datetime, timedelta
+    #     last_activity = datetime.fromisoformat(session['admin_last_activity'])
+    #     if datetime.now() - last_activity > timedelta(hours=2):
+    #         session.pop('admin_logged_in', None)
+    #         session.pop('admin_username', None)
+    #         session.pop('admin_last_activity', None)
+    #         flash('Phiên đăng nhập đã hết hạn!', 'error')
+    #         return redirect(url_for('admin_login'))
 
 # Danh sách sản phẩm chung
 PRODUCTS = [
@@ -414,15 +450,25 @@ def login():
 
 @app.route('/login/submit', methods=['POST'])
 def login_submit():
-    username = request.form.get('username')
+    email = request.form.get('email')
     password = request.form.get('password')
     
-    # Xử lý đăng nhập đơn giản (cần kết nối database thật)
-    if username and password:
-        flash(f'Đăng nhập thành công! Chào mừng {username}', 'success')
+    # Kiểm tra nếu là admin đăng nhập
+    if email in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[email] == password:
+        session['admin_logged_in'] = True
+        session['admin_username'] = email
+        flash(f'Chào mừng Admin {email}! Đăng nhập thành công.', 'success')
+        return redirect(url_for('admin'))
+    
+    # Xử lý đăng nhập khách hàng thông thường (cần kết nối database thật)
+    if email and password:
+        # Kiểm tra database khách hàng ở đây
+        session['user_logged_in'] = True
+        session['user_email'] = email
+        flash(f'Đăng nhập thành công! Chào mừng {email}', 'success')
         return redirect(url_for('home'))
     else:
-        flash('Tên đăng nhập hoặc mật khẩu không đúng!', 'error')
+        flash('Email hoặc mật khẩu không đúng!', 'error')
         return redirect(url_for('login'))
 
 @app.route('/register')
@@ -523,8 +569,236 @@ def chitietsanpham(id):
     return render_template('chitietsanpham.html', product=product, cart_count=get_cart_count())
 
 @app.route('/admin')
+@admin_required
 def admin():
-    return render_template('admin.html')
+    return render_template('admin.html', products=PRODUCTS)
+
+@app.route('/admin/login')
+def admin_login():
+    # Nếu đã đăng nhập, redirect to admin
+    if 'admin_logged_in' in session and session['admin_logged_in']:
+        return redirect(url_for('admin'))
+    return render_template('admin_login.html')
+
+@app.route('/admin/login', methods=['POST'])
+def admin_login_post():
+    username = request.form.get('username', '').strip()
+    password = request.form.get('password', '')
+    
+    # Kiểm tra thông tin đăng nhập
+    if username in ADMIN_CREDENTIALS and ADMIN_CREDENTIALS[username] == password:
+        session['admin_logged_in'] = True
+        session['admin_username'] = username
+        flash(f'Chào mừng {username}! Đăng nhập thành công.', 'success')
+        return redirect(url_for('admin'))
+    else:
+        flash('Tên đăng nhập hoặc mật khẩu không đúng!', 'error')
+        return redirect(url_for('admin_login'))
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    session.pop('admin_username', None)
+    flash('Đã đăng xuất thành công!', 'success')
+    return redirect(url_for('home'))
+
+@app.route('/admin/v2')
+@admin_required
+def admin_v2():
+    return render_template('admin_v2.html', products=PRODUCTS)
+
+@app.route('/admin/get_product/<int:product_id>')
+@admin_required
+def admin_get_product(product_id):
+    """Lấy thông tin sản phẩm theo ID cho chức năng edit"""
+    product = get_product_by_id(product_id)
+    if not product:
+        return {'error': 'Product not found'}, 404
+    return product
+
+@app.route('/admin/add_product', methods=['POST'])
+@admin_required
+def admin_add_product():
+    """Thêm sản phẩm mới"""
+    try:
+        # Lấy dữ liệu từ form
+        name = request.form.get('name')
+        if not name or not name.strip():
+            flash('Tên sản phẩm không được để trống!', 'error')
+            return redirect(url_for('admin'))
+            
+        price_num_str = request.form.get('price_num')
+        if not price_num_str:
+            flash('Giá sản phẩm không được để trống!', 'error')
+            return redirect(url_for('admin'))
+        price_num = int(price_num_str)
+        
+        category = request.form.get('category')
+        if not category:
+            flash('Danh mục không được để trống!', 'error')
+            return redirect(url_for('admin'))
+            
+        tag = request.form.get('tag') if request.form.get('tag') else None
+        desc = request.form.get('desc', '')
+        rating_str = request.form.get('rating', '5')
+        rating = int(rating_str) if rating_str else 5
+        sizes_str = request.form.get('sizes', '')
+        
+        # Xử lý sizes
+        sizes = []
+        if sizes_str:
+            try:
+                sizes = [int(size.strip()) for size in sizes_str.split(',') if size.strip()]
+            except ValueError:
+                flash('Kích thước phải là các số nguyên cách nhau bởi dấu phẩy!', 'error')
+                return redirect(url_for('admin'))
+        
+        # Tạo ID mới
+        new_id = max([p['id'] for p in PRODUCTS]) + 1 if PRODUCTS else 0
+        
+        # Handle image selection (local image file)
+        image_url = "https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80"  # default
+        image_file = request.form.get('image_file')
+        if image_file and image_file != '':
+            # Use local image from static/images folder
+            image_url = f'/static/images/{image_file}'
+        
+        # Handle file upload if provided (fallback for manual uploads)
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and file.filename != '':
+                # In a real application, you would save the file and get its URL
+                # For now, we'll use the local image if provided, otherwise placeholder
+                pass
+        
+        # Tạo sản phẩm mới
+        new_product = {
+            'id': new_id,
+            'name': name.strip(),
+            'price': f'{price_num:,} đ'.replace(',', '.'),
+            'price_num': price_num,
+            'desc': desc.strip(),
+            'img': image_url,
+            'sizes': sizes,
+            'category': category,
+            'rating': rating,
+            'tag': tag
+        }
+        
+        # Thêm vào danh sách
+        PRODUCTS.append(new_product)
+        
+        # Tạo lại tên file ảnh local
+        _assign_local_image_names()
+        
+        flash(f'Đã thêm sản phẩm "{name}" thành công!', 'success')
+        
+    except ValueError as ve:
+        flash(f'Dữ liệu không hợp lệ: {str(ve)}', 'error')
+    except Exception as e:
+        flash(f'Lỗi khi thêm sản phẩm: {str(e)}', 'error')
+    
+    return redirect(url_for('admin'))
+
+@app.route('/admin/edit_product/<int:product_id>', methods=['POST'])
+@admin_required
+def admin_edit_product(product_id):
+    """Chỉnh sửa sản phẩm"""
+    try:
+        # Tìm sản phẩm
+        product = get_product_by_id(product_id)
+        if not product:
+            flash('Sản phẩm không tồn tại!', 'error')
+            return redirect(url_for('admin'))
+        
+        # Lấy dữ liệu từ form
+        name = request.form.get('name')
+        if not name or not name.strip():
+            flash('Tên sản phẩm không được để trống!', 'error')
+            return redirect(url_for('admin'))
+        
+        price_num_str = request.form.get('price_num')
+        if not price_num_str:
+            flash('Giá sản phẩm không được để trống!', 'error')
+            return redirect(url_for('admin'))
+        price_num = int(price_num_str)
+        
+        category = request.form.get('category')
+        if not category:
+            flash('Danh mục không được để trống!', 'error')
+            return redirect(url_for('admin'))
+        
+        # Cập nhật thông tin
+        old_name = product['name']
+        product['name'] = name.strip()
+        product['price_num'] = price_num
+        product['price'] = f'{price_num:,} đ'.replace(',', '.')
+        product['category'] = category
+        product['tag'] = request.form.get('tag') if request.form.get('tag') else None
+        product['desc'] = request.form.get('desc', '').strip()
+        rating_str = request.form.get('rating', '5')
+        product['rating'] = int(rating_str) if rating_str else 5
+        
+        # Xử lý sizes
+        sizes_str = request.form.get('sizes', '')
+        if sizes_str:
+            try:
+                product['sizes'] = [int(size.strip()) for size in sizes_str.split(',') if size.strip()]
+            except ValueError:
+                flash('Kích thước phải là các số nguyên cách nhau bởi dấu phẩy!', 'error')
+                return redirect(url_for('admin'))
+        else:
+            product['sizes'] = []
+        
+        # Handle image selection (local image file)
+        image_file = request.form.get('image_file')
+        if image_file and image_file != '':
+            # Use local image from static/images folder
+            product['img'] = f'/static/images/{image_file}'
+        
+        # Handle file upload if provided (fallback for manual uploads)
+        if 'image' in request.files:
+            file = request.files['image']
+            if file and file.filename and file.filename != '':
+                # In a real application, you would save the file and update the image URL
+                # For now, we'll keep the existing image
+                pass
+        
+        # Tạo lại tên file ảnh local
+        _assign_local_image_names()
+        
+        flash(f'Đã cập nhật sản phẩm "{product["name"]}" thành công!', 'success')
+        
+    except ValueError as ve:
+        flash(f'Dữ liệu không hợp lệ: {str(ve)}', 'error')
+    except Exception as e:
+        flash(f'Lỗi khi cập nhật sản phẩm: {str(e)}', 'error')
+    
+    return redirect(url_for('admin'))
+
+@app.route('/admin/delete_product/<int:product_id>', methods=['POST'])
+@admin_required
+def admin_delete_product(product_id):
+    """Xóa sản phẩm"""
+    try:
+        # Tìm và xóa sản phẩm
+        product = get_product_by_id(product_id)
+        if not product:
+            flash('Sản phẩm không tồn tại!', 'error')
+            return redirect(url_for('admin'))
+        
+        product_name = product['name']
+        
+        # Xóa khỏi danh sách
+        global PRODUCTS
+        PRODUCTS = [p for p in PRODUCTS if p['id'] != product_id]
+        
+        flash(f'Đã xóa sản phẩm "{product_name}" thành công!', 'success')
+        
+    except Exception as e:
+        flash(f'Lỗi khi xóa sản phẩm: {str(e)}', 'error')
+    
+    return redirect(url_for('admin'))
 
 @app.route('/contact')
 def contact():
@@ -549,11 +823,16 @@ def add_to_giohang():
     # Lấy dữ liệu từ form
     product_id = request.form.get('product_id')
     size = request.form.get('size')
-    quantity = request.form.get('quantity', 1)
+    quantity_str = request.form.get('quantity', '1')
     
     if not product_id:
         flash('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng!', 'error')
         return redirect(url_for('home'))
+    
+    try:
+        quantity = int(quantity_str) if quantity_str else 1
+    except ValueError:
+        quantity = 1
     
     # Lấy thông tin sản phẩm
     product = get_product_by_id(product_id)
@@ -573,13 +852,23 @@ def add_to_giohang():
 @app.route('/remove_from_cart', methods=['POST'])
 def remove_from_cart():
     """Xóa sản phẩm khỏi giỏ hàng"""
-    product_id = request.form.get('product_id')
+    product_id_str = request.form.get('product_id')
     size = request.form.get('size')
+    
+    if not product_id_str:
+        flash('Có lỗi xảy ra!', 'error')
+        return redirect(url_for('giohang'))
+    
+    try:
+        product_id = int(product_id_str)
+    except ValueError:
+        flash('ID sản phẩm không hợp lệ!', 'error')
+        return redirect(url_for('giohang'))
     
     if 'cart' in session:
         cart = session['cart']
         # Tìm và xóa sản phẩm khỏi giỏ hàng
-        cart = [item for item in cart if not (item['product_id'] == int(product_id) and item.get('size') == size)]
+        cart = [item for item in cart if not (item['product_id'] == product_id and item.get('size') == size)]
         session['cart'] = cart
         flash('Đã xóa sản phẩm khỏi giỏ hàng!', 'success')
     
@@ -588,19 +877,30 @@ def remove_from_cart():
 @app.route('/update_cart', methods=['POST'])
 def update_cart():
     """Cập nhật số lượng sản phẩm trong giỏ hàng"""
-    product_id = request.form.get('product_id')
+    product_id_str = request.form.get('product_id')
     size = request.form.get('size')
-    quantity = request.form.get('quantity')
+    quantity_str = request.form.get('quantity')
     
-    if 'cart' in session and quantity and int(quantity) > 0:
+    if not product_id_str or not quantity_str:
+        flash('Dữ liệu không hợp lệ!', 'error')
+        return redirect(url_for('giohang'))
+    
+    try:
+        product_id = int(product_id_str)
+        quantity = int(quantity_str)
+    except ValueError:
+        flash('Dữ liệu không hợp lệ!', 'error')
+        return redirect(url_for('giohang'))
+    
+    if 'cart' in session and quantity > 0:
         cart = session['cart']
         for item in cart:
-            if item['product_id'] == int(product_id) and item.get('size') == size:
-                item['quantity'] = int(quantity)
+            if item['product_id'] == product_id and item.get('size') == size:
+                item['quantity'] = quantity
                 break
         session['cart'] = cart
         flash('Đã cập nhật giỏ hàng!', 'success')
-    elif int(quantity) <= 0:
+    elif quantity <= 0:
         # Xóa sản phẩm nếu số lượng <= 0
         return remove_from_cart()
     

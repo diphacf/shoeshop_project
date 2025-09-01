@@ -200,7 +200,7 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
                 <h2>Đăng Nhập</h2>
                 <p>Nhập thông tin để tiếp tục phiên làm việc.</p>
             </div>
-            <form id="loginForm" novalidate>
+            <form id="loginForm" method="POST" action="{{ url_for('login_submit') }}" novalidate>
                 <div class="form-group">
                     <label for="email"><i class="fas fa-envelope"></i>Email</label>
                     <div class="input-shell">
@@ -262,15 +262,15 @@ body{background:radial-gradient(circle at 30% 20%,#ffffff 0%,#f1f4f7 55%,#e7ebef
     function validateEmail(v){return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);}    
 
     form.addEventListener('submit',e=>{
-        e.preventDefault();email.classList.remove('error-shake');password.classList.remove('error-shake');
+        email.classList.remove('error-shake');password.classList.remove('error-shake');
         const ev=email.value.trim();const pv=password.value.trim();
-        if(!ev){email.classList.add('error-shake');showToast('Vui lòng nhập email','error');return}
-        if(!validateEmail(ev)){email.classList.add('error-shake');showToast('Email không hợp lệ','error');return}
-        if(!pv){password.classList.add('error-shake');showToast('Vui lòng nhập mật khẩu','error');return}
-        if(pv.length<6){password.classList.add('error-shake');showToast('Mật khẩu tối thiểu 6 ký tự','error');return}
+        if(!ev){e.preventDefault();email.classList.add('error-shake');showToast('Vui lòng nhập email','error');return}
+        if(!validateEmail(ev)){e.preventDefault();email.classList.add('error-shake');showToast('Email không hợp lệ','error');return}
+        if(!pv){e.preventDefault();password.classList.add('error-shake');showToast('Vui lòng nhập mật khẩu','error');return}
+        if(pv.length<3){e.preventDefault();password.classList.add('error-shake');showToast('Mật khẩu tối thiểu 3 ký tự','error');return}
+        
+        // Nếu validation thành công, cho phép form submit
         btn.disabled=true;btn.dataset.original=btn.innerHTML;btn.innerHTML='<span class="loading-spinner"></span> Đang xử lý...';
-        setTimeout(()=>{btn.innerHTML='<i class="fas fa-check"></i> Thành công';btn.style.background='linear-gradient(90deg,#ffffff,#9ca3af,#ffffff)';showToast('Đăng nhập thành công!','success');setTimeout(()=>{window.location.href='{{ url_for("home") }}'},1200)},1500);
-        setTimeout(()=>{btn.disabled=false;},2400);
     });
     goRegister.addEventListener('click',()=>{window.location.href='{{ url_for("register") }}';});
 })();
