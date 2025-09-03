@@ -34,8 +34,8 @@
                     <!-- Navigation -->
                     <nav class="hidden md:flex space-x-6">
                         <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-gray-900 font-medium {{ 'font-bold underline' if not current_category }}">Trang chủ</a>
-                        <a href="{{ url_for('products_by_category', category='giay') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='giay' }}">Giày</a>
-                        <a href="{{ url_for('products_by_category', category='dep') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='dep' }}">Dép</a>
+                        <a href="{{ url_for('products_by_category', category_name='giay') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='giay' }}">Giày</a>
+                        <a href="{{ url_for('products_by_category', category_name='dep') }}" class="text-gray-700 hover:text-gray-900 {{ 'text-black font-semibold underline' if current_category=='dep' }}">Dép</a>
                         <a href="{{ url_for('contact') }}" class="text-gray-700 hover:text-gray-900">Liên hệ</a>
                     </nav>
                 </div>
@@ -83,8 +83,8 @@
                         <input name="q" value="{{ search_query or '' }}" type="text" placeholder="Tìm kiếm sản phẩm..." class="bg-transparent outline-none text-sm w-full" />
                     </form>
                     <a href="{{ url_for('home') }}" class="text-gray-700 py-2">Trang chủ</a>
-                    <a href="{{ url_for('products_by_category', category='giay') }}" class="text-gray-700 py-2">Giày</a>
-                    <a href="{{ url_for('products_by_category', category='dep') }}" class="text-gray-700 py-2">Dép</a>
+                    <a href="{{ url_for('products_by_category', category_name='giay') }}" class="text-gray-700 py-2">Giày</a>
+                    <a href="{{ url_for('products_by_category', category_name='dep') }}" class="text-gray-700 py-2">Dép</a>
                     <a href="{{ url_for('contact') }}" class="text-gray-700 py-2">Liên hệ</a>
                     <div class="pt-3 border-t">
                         <a href="{{ url_for('login') }}" class="text-gray-700 py-2 block">Đăng nhập</a>
@@ -215,12 +215,17 @@
 
             <!-- Category Filter -->
             {% if not search_query %}
-            <div class="flex justify-center mb-8">
-                <div class="bg-gray-100 rounded-lg p-1 flex space-x-1">
-                    <a href="{{ url_for('home') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if not current_category else 'text-gray-600 hover:bg-white' }}">Tất cả</a>
-                    <a href="{{ url_for('products_by_category', category='giay') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if current_category=='giay' else 'text-gray-600 hover:bg-white' }}">Giày</a>
-                    <a href="{{ url_for('products_by_category', category='dep') }}" class="px-6 py-2 rounded-lg text-sm font-medium {{ 'bg-black text-white' if current_category=='dep' else 'text-gray-600 hover:bg-white' }}">Dép</a>
-                </div>
+            <div class="mb-8 text-center">
+                <form method="get" action="{{ url_for('home') }}">
+                    <select name="category_id" onchange="this.form.submit()" class="px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-black">
+                        <option value="">Tất cả sản phẩm</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.category_id }}" 
+                                {% if current_category == cat.category_id|string %}selected{% endif %}> {{ cat.category_name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
             </div>
             {% endif %}
 

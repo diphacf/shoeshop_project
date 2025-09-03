@@ -35,25 +35,74 @@ def get_product_by_id(product_id):
 def get_products_by_category(category):
     db = get_db()
     cursor = db.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM products WHERE category=%s", (category,))
+    cursor.execute("SELECT * FROM products WHERE category_id=%s", (category,))
     products = cursor.fetchall()
     cursor.close()
     return products
 
 @app.route('/')
 def index():
-    products = get_products()
-    return render_template('home.html', products=products)
+    category_id = request.args.get('category_id')
+
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Lấy danh sách category để hiển thị dropdown
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+
+    if category_id:
+        products = get_products_by_category(category_id)
+    else:
+        products = get_products()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("home.html", 
+                           categories=categories, 
+                           products=products, 
+                           current_category=category_id)
 
 @app.route('/home')
 def home():
-    products = get_products()
-    return render_template('home.html', products=products)
+    category_id = request.args.get('category_id')
 
-@app.route('/san-pham/<category>')
-def products_by_category(category):
-    products = get_products_by_category(category)
-    return render_template('home.html', products=products, current_category=category)
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+
+    # Lấy danh sách category để hiển thị dropdown
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+
+    if category_id:
+        products = get_products_by_category(category_id)
+    else:
+        products = get_products()
+
+    cursor.close()
+    conn.close()
+
+    return render_template("home.html", 
+                           categories=categories, 
+                           products=products, 
+                           current_category=category_id)
+
+@app.route('/products/category/<string:category_name>')
+def products_by_category(category_name):
+    products = get_products_by_category(category_name)
+
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return render_template("home.html",
+                           categories=categories,
+                           products=products,
+                           current_category=category_name)
 
 @app.route('/chitietsanpham/<int:product_id>')
 def chitietsanpham(product_id):
