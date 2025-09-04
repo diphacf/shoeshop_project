@@ -50,9 +50,14 @@
                     
                     <!-- User Menu -->
                     <div class="hidden md:flex items-center space-x-3">
-                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
-                        <span class="text-gray-300">|</span>
-                        <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% if session.get('user_id') %}
+                            <span class="text-gray-700">Xin chào, {{ session.get('user_name') or 'User' }}</span>
+                            <a href="{{ url_for('logout') }}" class="text-gray-700 hover:text-gray-900">Đăng xuất</a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -129,13 +134,13 @@
                                 <div class="flex items-center space-x-4">
                                     <!-- Product Image -->
                                     <div class="flex-shrink-0">
-                                <img src="{{ get_image_path(get_product_by_id(item.product_id)) }}" alt="{{ item.name }}" 
+                                <img src="{{ get_image_path(item) }}" alt="{{ item.product_name }}" 
                                     class="w-20 h-20 object-cover rounded-lg">
                                     </div>
                                     
                                     <!-- Product Info -->
                                     <div class="flex-1">
-                                        <h3 class="font-semibold text-gray-900 mb-1">{{ item.name }}</h3>
+                                        <h3 class="font-semibold text-gray-900 mb-1">{{ item.product_name }}</h3>
                                         <p class="text-gray-600 text-sm mb-2">Size: {{ item.size or 'Chưa chọn' }}</p>
                                         <div class="text-lg font-bold text-orange-600">{{ item.price }}</div>
                                     </div>
@@ -164,7 +169,7 @@
                                     
                                     <!-- Subtotal -->
                                     <div class="text-right">
-                                        <div class="font-bold text-gray-900">{{ '{:,.0f}'.format(item.price_num * item.quantity) }} đ</div>
+                                        <div class="font-bold text-gray-900">{{ '{:,.0f}'.format(item.price * 1000 * item.quantity) }} đ</div>
                                     </div>
                                     
                                     <!-- Remove Button -->

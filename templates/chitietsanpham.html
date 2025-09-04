@@ -50,9 +50,14 @@
                     
                     <!-- User Menu -->
                     <div class="hidden md:flex items-center space-x-3">
-                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
-                        <span class="text-gray-300">|</span>
-                        <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% if session.get('user_id') %}
+                            <span class="text-gray-700">Xin chào, {{ session.get('user_name') or 'User' }}</span>
+                            <a href="{{ url_for('logout') }}" class="text-gray-700 hover:text-gray-900">Đăng xuất</a>
+                        {% else %}
+                            <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -95,7 +100,7 @@
                 <li>
                     <div class="flex items-center">
                         <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
-                        <span class="text-gray-900 font-medium">{{ product.name }}</span>
+                        <span class="text-gray-900 font-medium">{{ product.product_name }}</span>
                     </div>
                 </li>
             </ol>
@@ -112,7 +117,7 @@
              </div>
                 
                 <!-- Thumbnail Images -->
-                <div class="grid grid-cols-4 gap-3">
+                <!-- <div class="grid grid-cols-4 gap-3">
                 <div class="bg-white rounded-lg p-3 border-2 border-orange-500 cursor-pointer">
                     <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
                         class="w-full h-20 object-cover rounded">
@@ -129,7 +134,7 @@
                     <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
                         class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
                 </div>
-             </div>
+                </div> -->
             </div>
 
             <!-- Product Info -->
@@ -139,19 +144,19 @@
                     {% if product.tag %}
                     <span class="inline-block bg-{{ 'orange-500' if product.tag == 'Sale' else 'red-500' if product.tag == 'Hot' else 'blue-500' if product.tag == 'New' else 'yellow-500' }} text-{{ 'black' if product.tag == 'Best' else 'white' }} px-3 py-1 text-sm rounded-full mb-3">{{ product.tag }}</span>
                     {% endif %}
-                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.product_name }}</h1>
                     
                     <!-- Rating & Reviews -->
                     <div class="flex items-center space-x-4 mb-4">
                         <div class="flex text-yellow-400">
-                            {% for i in range(product.rating) %}
+                            {% for i in range(product.rating | default(5, true)) %}
                             <i class="fas fa-star"></i>
                             {% endfor %}
-                            {% for i in range(5 - product.rating) %}
+                            {% for i in range(5 - product.rating | default(5, true)) %}
                             <i class="far fa-star"></i>
                             {% endfor %}
                         </div>
-                        <span class="text-gray-600">({{ product.rating }}/5)</span>
+                        <span class="text-gray-600">({{ product.rating | default(5, true) }}/5)</span>
                         <span class="text-gray-400">•</span>
                         <span class="text-gray-600">127 đánh giá</span>
                     </div>
@@ -159,14 +164,14 @@
 
                 <!-- Price -->
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="text-3xl font-bold text-orange-600">{{ product.price }}</div>
+                    <div class="text-3xl font-bold text-orange-600">Giá: {{ product.price }}</div>
                     <div class="text-sm text-gray-600 mt-1">Đã bao gồm VAT</div>
                 </div>
 
                 <!-- Description -->
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-3">Mô tả sản phẩm</h3>
-                    <p class="text-gray-600 leading-relaxed">{{ product.desc }}</p>
+                    <p class="text-gray-600 leading-relaxed">{{ product.description }}</p>
                 </div>
 
                 <!-- Features -->
@@ -196,58 +201,64 @@
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-3">Chọn size</h3>
                     <div class="grid grid-cols-4 gap-3" id="sizeSelection">
-                        {% for size in product.sizes %}
-                        <button class="size-btn border border-gray-300 rounded-lg py-3 text-center hover:border-orange-500 hover:bg-orange-50 transition" 
-                                data-size="{{ size }}">
+                        {% for size in sizes %}
+                        <button 
+                            type="button"
+                            class="size-btn border rounded-lg py-3 text-center transition 
+                                {% if loop.first %}border-orange-500 bg-orange-50{% else %}border-gray-300 hover:border-orange-500 hover:bg-orange-50{% endif %}"
+                            data-size="{{ size }}">
                             {{ size }}
                         </button>
                         {% endfor %}
-                    </div>
-                    <div class="mt-2">
-                        <a href="#" class="text-sm text-blue-600 hover:underline">
-                            <i class="fas fa-ruler mr-1"></i>Hướng dẫn chọn size
-                        </a>
                     </div>
                 </div>
 
                 <!-- Quantity & Add to Cart -->
                 <div>
                     <h3 class="text-lg font-semibold text-gray-900 mb-3">Số lượng</h3>
-                    <form action="{{ url_for('add_to_giohang') }}" method="post" class="space-y-4">
-                        <input type="hidden" name="product_id" value="{{ product.id }}">
-                        <input type="hidden" name="size" id="selectedSize" value="{{ product.sizes[0] if product.sizes }}">
-                        
-                        <!-- Quantity Selector -->
-                        <div class="flex items-center space-x-4">
-                            <div class="flex items-center border border-gray-300 rounded-lg">
-                                <button type="button" onclick="decreaseQuantity()" 
-                                        class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-l-lg">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="10"
-                                       class="w-16 text-center py-3 border-0 focus:ring-0 focus:outline-none">
-                                <button type="button" onclick="increaseQuantity()" 
-                                        class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-r-lg">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                            <span class="text-gray-600">Còn lại 15 sản phẩm</span>
+                    <!-- Quantity Selector -->
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center border border-gray-300 rounded-lg">
+                            <button type="button" onclick="decreaseQuantity()" 
+                                    class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-l-lg">
+                                <i class="fas fa-minus"></i>
+                            </button>
+                            <input type="number" id="quantityControl" value="1" min="1" max="10"
+                                    class="w-16 text-center py-3 border-0 focus:ring-0 focus:outline-none">
+                            <button type="button" onclick="increaseQuantity()" 
+                                    class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-r-lg">
+                                <i class="fas fa-plus"></i>
+                            </button>
                         </div>
+                    </div>
 
-                        <!-- Action Buttons -->
-                        <div class="space-y-3">
+                    <!-- Action Buttons -->
+                    <div class="space-y-3">
+                        <form action="{{ url_for('add_to_giohang') }}" method="post" class="space-y-4">
+                            <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                            <input type="hidden" name="size" id="sizeAddToCart" value="{{ sizes[0] }}">
+                            <input type="hidden" name="quantity" id="qtyAddToCart" value="1">
+
                             <button type="submit" 
-                                    class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-orange-600 transition flex items-center justify-center">
+                                class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-orange-600 transition flex items-center justify-center">
                                 <i class="fas fa-shopping-cart mr-2"></i>
                                 Thêm vào giỏ hàng
                             </button>
-                            <button type="button" 
-                                    class="w-full bg-black text-white py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition">
+                        </form>
+                        
+                        <form action="{{ url_for('mua_ngay') }}" method="post" class="space-y-4">
+                            <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                            <input type="hidden" name="size" id="sizeBuyNow" value="{{ sizes[0] }}">
+                            <input type="hidden" name="quantity" id="qtyBuyNow" value="1">
+                            
+                            <!-- Nút mua ngay -->
+                            <button type="submit" 
+                                class="w-full bg-black text-white py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition">
                                 <i class="fas fa-bolt mr-2"></i>
                                 Mua ngay
                             </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
 
                 <!-- Additional Info -->
@@ -336,7 +347,7 @@
                                 </tr>
                                 <tr class="border-b">
                                     <td class="py-2 text-gray-600">Danh mục</td>
-                                    <td class="py-2 font-medium">{{ product.category|title }}</td>
+                                    <td class="py-2 font-medium">{{ categories.category_name|title }}</td>
                                 </tr>
                                 <tr class="border-b">
                                     <td class="py-2 text-gray-600">Size có sẵn</td>
@@ -377,13 +388,13 @@
                         <!-- Review Summary -->
                         <div class="bg-gray-50 rounded-lg p-6">
                             <div class="flex items-center space-x-4">
-                                <div class="text-4xl font-bold text-gray-900">{{ product.rating }}/5</div>
+                                <div class="text-4xl font-bold text-gray-900">{{ product.rating | default(5, true) }}/5</div>
                                 <div>
                                     <div class="flex text-yellow-400 mb-1">
-                                        {% for i in range(product.rating) %}
+                                        {% for i in range(product.rating | default(5, true)) %}
                                         <i class="fas fa-star"></i>
                                         {% endfor %}
-                                        {% for i in range(5 - product.rating) %}
+                                        {% for i in range(5 - product.rating | default(5, true)) %}
                                         <i class="far fa-star"></i>
                                         {% endfor %}
                                     </div>
@@ -486,25 +497,41 @@
                 this.classList.remove('border-gray-300');
                 this.classList.add('border-orange-500', 'bg-orange-50', 'text-orange-600');
                 
-                // Update hidden input
-                document.getElementById('selectedSize').value = this.dataset.size;
+                // Cập nhật cho 2 form
+                const size = this.dataset.size;
+                const addSize = document.getElementById('sizeAddToCart');
+                const buySize = document.getElementById('sizeBuyNow');
+                if (addSize) addSize.value = size;
+                if (buySize) buySize.value = size;
             });
         });
 
         // Quantity controls
+        const qtyInput = document.getElementById('quantityControl');
+        const qtyAdd = document.getElementById('qtyAddToCart');
+        const qtyBuy = document.getElementById('qtyBuyNow');
+
+        function setQty(val) {
+            const v = Math.max(1, Math.min(10, parseInt(val || 1)));
+            qtyInput.value = v;
+            if (qtyAdd) qtyAdd.value = v;
+            if (qtyBuy) qtyBuy.value = v;
+        }
+
         function increaseQuantity() {
-            const input = document.getElementById('quantity');
-            if (parseInt(input.value) < 10) {
-                input.value = parseInt(input.value) + 1;
-            }
+            setQty((parseInt(qtyInput.value) || 1) + 1);
         }
 
         function decreaseQuantity() {
-            const input = document.getElementById('quantity');
-            if (parseInt(input.value) > 1) {
-                input.value = parseInt(input.value) - 1;
-            }
+            setQty((parseInt(qtyInput.value) || 1) - 1);
         }
+
+        qtyInput.addEventListener('input', function () {
+            setQty(this.value);
+        });
+
+        // Set mặc định ban đầu
+        setQty(qtyInput.value || 1);
 
         // Tab functionality
         document.querySelectorAll('.tab-btn').forEach(btn => {
