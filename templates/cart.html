@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giỏ hàng - ShoeStore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold text-gray-800">ShoeStore</h1>
+                    
+                    <!-- Navigation -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-gray-900">Trang chủ</a>
+                        <a href="{{ url_for('contact') }}" class="text-gray-700 hover:text-gray-900">Liên hệ</a>
+                    </nav>
+                </div>
+
+                <!-- Cart -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('cart') }}" class="relative p-2">
+                        <i class="fas fa-shopping-cart text-gray-700 text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ cart_count or 0 }}</span>
+                    </a>
+                    
+                    <!-- User Menu -->
+                    <div class="hidden md:flex items-center space-x-3">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                        <span class="text-gray-300">|</span>
+                        <a href="{{ url_for('register') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for category, message in messages %}
+                    <div class="alert mb-4 p-4 rounded-lg border-l-4 {{ 'bg-green-50 border-green-500 text-green-700' if category == 'success' else 'bg-red-50 border-red-500 text-red-700' }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} mr-2"></i>
+                        {{ message }}
+                        <button onclick="this.parentElement.remove()" class="float-right">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Trang chủ
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <span class="text-gray-900 font-medium">Giỏ hàng</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Cart Items -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h1 class="text-2xl font-bold text-gray-900">Giỏ hàng của bạn</h1>
+                        {% if cart_items %}
+                            <span class="bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm font-medium">
+                                {{ cart_count }} sản phẩm
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    {% if not cart_items %}
+                        <!-- Empty Cart -->
+                        <div class="text-center py-16">
+                            <div class="mb-6">
+                                <i class="fas fa-shopping-cart text-gray-300 text-6xl"></i>
+                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900 mb-2">Giỏ hàng trống</h3>
+                            <p class="text-gray-600 mb-6">Hãy thêm những sản phẩm yêu thích vào giỏ hàng</p>
+                            <a href="{{ url_for('home') }}" class="bg-black text-white px-8 py-3 rounded-lg hover:bg-gray-800 transition inline-flex items-center">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Tiếp tục mua sắm
+                            </a>
+                        </div>
+                    {% else %}
+                        <!-- Cart Items List -->
+                        <div class="space-y-4">
+                            {% for item in cart_items %}
+                            <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition">
+                                <div class="flex items-center space-x-4">
+                                    <!-- Product Image -->
+                                    <div class="flex-shrink-0">
+                                <img src="{{ get_image_path(get_product_by_id(item.product_id)) }}" alt="{{ item.name }}" 
+                                    class="w-20 h-20 object-cover rounded-lg">
+                                    </div>
+                                    
+                                    <!-- Product Info -->
+                                    <div class="flex-1">
+                                        <h3 class="font-semibold text-gray-900 mb-1">{{ item.name }}</h3>
+                                        <p class="text-sm text-gray-600">Size: {{ item.size }}</p>
+                                        <div class="text-lg font-bold text-orange-600">{{ item.price }}</div>
+                                    </div>
+                                    
+                                    <!-- Quantity Controls -->
+                                    <div class="flex items-center space-x-3">
+                                        <form action="{{ url_for('update_cart') }}" method="post" class="flex items-center border border-gray-300 rounded-lg">
+                                            <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                                            <input type="hidden" name="size" value="{{ item.size }}">
+                                            <button type="button" onclick="decreaseQuantity(this)" 
+                                                    class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-l-lg">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <input type="number" name="quantity" value="{{ item.quantity }}" min="1" 
+                                                   class="w-16 text-center py-2 border-0 focus:ring-0 focus:outline-none">
+                                            <button type="button" onclick="increaseQuantity(this)" 
+                                                    class="px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-r-lg">
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                            <button type="submit" 
+                                                    class="ml-2 bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition text-sm">
+                                                Cập nhật
+                                            </button>
+                                        </form>
+                                    </div>
+                                    
+                                    <!-- Subtotal -->
+                                    <div class="text-right">
+                                        <div class="font-bold text-gray-900">{{ '{:,.0f}'.format(item.price_num * item.quantity) }} đ</div>
+                                    </div>
+                                    
+                                    <!-- Remove Button -->
+                                    <form action="{{ url_for('remove_from_cart') }}" method="post">
+                                        <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                                        <input type="hidden" name="size" value="{{ item.size }}">
+                                        <button type="submit" 
+                                                class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition"
+                                                onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- Cart Actions -->
+                        <div class="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+                            <a href="{{ url_for('home') }}" 
+                               class="text-gray-600 hover:text-gray-900 flex items-center">
+                                <i class="fas fa-arrow-left mr-2"></i>
+                                Tiếp tục mua sắm
+                            </a>
+                            <a href="{{ url_for('clear_cart') }}" 
+                               class="text-red-600 hover:text-red-800 flex items-center"
+                               onclick="return confirm('Bạn có chắc muốn xóa toàn bộ giỏ hàng?')">
+                                <i class="fas fa-trash mr-2"></i>
+                                Xóa toàn bộ
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Order Summary -->
+            {% if cart_items %}
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-sm p-6 sticky top-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Tóm tắt đơn hàng</h2>
+                    
+                    <!-- Order Details -->
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tạm tính</span>
+                            <span class="font-medium">{{ '{:,.0f}'.format(cart_total) }} đ</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Phí vận chuyển</span>
+                            {% if shipping_fee == 0 %}
+                                <span class="font-medium text-green-600">Miễn phí</span>
+                            {% else %}
+                                <span class="font-medium">{{ '{:,.0f}'.format(shipping_fee) }} đ</span>
+                            {% endif %}
+                        </div>
+                        {% if applied_promo %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Giảm giá ({{ applied_promo.code }})</span>
+                            <span class="font-medium text-green-600">-{{ '{:,.0f}'.format(promo_discount) }} đ</span>
+                        </div>
+                        {% else %}
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Giảm giá</span>
+                            <span class="font-medium">-0 đ</span>
+                        </div>
+                        {% endif %}
+                        <div class="border-t border-gray-200 pt-4">
+                            <div class="flex justify-between">
+                                <span class="text-lg font-bold text-gray-900">Tổng cộng</span>
+                                <span class="text-xl font-bold text-orange-600">{{ '{:,.0f}'.format(final_total) }} đ</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Promo Code -->
+                    <div class="mb-6">
+                        {% if applied_promo %}
+                        <div class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    <span class="text-sm text-green-800">{{ applied_promo.description }}</span>
+                                </div>
+                                <a href="{{ url_for('remove_promo') }}" class="text-red-600 hover:text-red-800">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mã giảm giá</label>
+                        <form action="{{ url_for('apply_promo') }}" method="post" class="flex">
+                            <input type="text" name="promo_code" placeholder="Nhập mã giảm giá" 
+                                   class="flex-1 border border-gray-300 rounded-l-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 uppercase">
+                            <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded-r-lg hover:bg-gray-900 transition">
+                                Áp dụng
+                            </button>
+                        </form>
+                        <div class="mt-2 text-xs text-gray-500">
+                            <p>Mã khuyến mãi: <strong>WELCOME10</strong> (giảm 10%), <strong>SUMMER20</strong> (giảm 20%), <strong>FREESHIP</strong> (miễn phí ship)</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Checkout Button -->
+                    <button class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-orange-600 transition flex items-center justify-center">
+                        <i class="fas fa-lock mr-2"></i>
+                        Tiến hành thanh toán
+                    </button>
+
+                    <!-- Payment Methods -->
+                    <div class="mt-6">
+                        <p class="text-sm text-gray-600 mb-3">Chúng tôi chấp nhận:</p>
+                        <div class="flex space-x-2">
+                            <div class="flex items-center justify-center w-12 h-8 bg-blue-600 rounded text-white text-xs font-bold">
+                                VISA
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-8 bg-red-600 rounded text-white text-xs font-bold">
+                                MC
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-8 bg-blue-500 rounded text-white text-xs font-bold">
+                                ATM
+                            </div>
+                            <div class="flex items-center justify-center w-12 h-8 bg-orange-500 rounded text-white text-xs font-bold">
+                                COD
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Security Info -->
+                    <div class="mt-6 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-shield-alt text-green-600 mr-2"></i>
+                            <span class="text-sm text-green-800">Thanh toán an toàn & bảo mật 100%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-xl font-bold mb-4">ShoeStore</h3>
+                <p class="text-gray-400 mb-4">Cửa hàng giày dép uy tín số 1 Việt Nam</p>
+                <div class="flex justify-center space-x-4">
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="#" class="text-gray-400 hover:text-white">
+                        <i class="fab fa-twitter"></i>
+                    </a>
+                </div>
+                <div class="border-t border-gray-700 mt-8 pt-8">
+                    <p class="text-gray-400 text-sm">&copy; 2025 ShoeStore. Tất cả quyền được bảo lưu.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Quantity control functions
+        function increaseQuantity(button) {
+            const input = button.parentElement.querySelector('input[name="quantity"]');
+            input.value = parseInt(input.value) + 1;
+        }
+
+        function decreaseQuantity(button) {
+            const input = button.parentElement.querySelector('input[name="quantity"]');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Add smooth animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const cartItems = document.querySelectorAll('.border.border-gray-200');
+            cartItems.forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.5s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+    </script>
+</body>
+</html>

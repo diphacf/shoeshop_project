@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - ShoeStore</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        orange: {
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <!-- Logo -->
+                <div class="flex items-center space-x-8">
+                    <h1 class="text-2xl font-bold text-gray-800">ShoeStore</h1>
+                    
+                    <!-- Navigation -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="{{ url_for('home') }}" class="text-gray-700 hover:text-gray-900">Trang chủ</a>
+                        <a href="#" class="text-gray-700 hover:text-gray-900">Giày</a>
+                        <a href="#" class="text-gray-700 hover:text-gray-900">Dép</a>
+                        <a href="#" class="text-gray-700 hover:text-gray-900">Về chúng tôi</a>
+                        <a href="{{ url_for('contact') }}" class="text-gray-700 hover:text-gray-900">Liên hệ</a>
+                    </nav>
+                </div>
+
+                <!-- Cart -->
+                <div class="flex items-center space-x-4">
+                    <a href="{{ url_for('giohang') }}" class="relative p-2">
+                        <i class="fas fa-shopping-cart text-gray-700 text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">{{ cart_count or 0 }}</span>
+                    </a>
+                    
+                    <!-- User Menu -->
+                    <div class="hidden md:flex items-center space-x-3">
+                        <a href="{{ url_for('login') }}" class="text-gray-700 hover:text-gray-900">Đăng nhập</a>
+                        <span class="text-gray-300">|</span>
+                        <a href="{{ url_for('dangky') }}" class="text-gray-700 hover:text-gray-900">Đăng ký</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 py-4">
+                {% for category, message in messages %}
+                    <div class="alert mb-4 p-4 rounded-lg border-l-4 {{ 'bg-green-50 border-green-500 text-green-700' if category == 'success' else 'bg-red-50 border-red-500 text-red-700' }}">
+                        <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} mr-2"></i>
+                        {{ message }}
+                        <button onclick="this.parentElement.remove()" class="float-right">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+        <!-- Breadcrumb -->
+        <nav class="flex mb-8">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="{{ url_for('home') }}" class="text-gray-600 hover:text-gray-900">
+                        <i class="fas fa-home mr-2"></i>Trang chủ
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <span class="text-gray-600">{{ product.category|title }}</span>
+                    </div>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <span class="text-gray-900 font-medium">{{ product.name }}</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Product Detail -->
+        <div class="grid lg:grid-cols-2 gap-12">
+            <!-- Product Images -->
+            <div class="space-y-4">
+                <!-- Main Image -->
+             <div class="bg-white rounded-2xl p-8 shadow-sm">
+                <img id="mainImage" src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                    class="w-full h-96 object-cover rounded-lg hover:scale-105 transition-transform duration-300">
+             </div>
+                
+                <!-- Thumbnail Images -->
+                <div class="grid grid-cols-4 gap-3">
+                <div class="bg-white rounded-lg p-3 border-2 border-orange-500 cursor-pointer">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded">
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+                <div class="bg-white rounded-lg p-3 border border-gray-200 cursor-pointer hover:border-orange-500 transition">
+                    <img src="{{ get_image_path(product) }}" alt="{{ product.name }}" 
+                        class="w-full h-20 object-cover rounded grayscale hover:grayscale-0 transition">
+                </div>
+             </div>
+            </div>
+
+            <!-- Product Info -->
+            <div class="space-y-6">
+                <!-- Product Title & Rating -->
+                <div>
+                    {% if product.tag %}
+                    <span class="inline-block bg-{{ 'orange-500' if product.tag == 'Sale' else 'red-500' if product.tag == 'Hot' else 'blue-500' if product.tag == 'New' else 'yellow-500' }} text-{{ 'black' if product.tag == 'Best' else 'white' }} px-3 py-1 text-sm rounded-full mb-3">{{ product.tag }}</span>
+                    {% endif %}
+                    <h1 class="text-3xl font-bold text-gray-900 mb-4">{{ product.name }}</h1>
+                    
+                    <!-- Rating & Reviews -->
+                    <div class="flex items-center space-x-4 mb-4">
+                        <div class="flex text-yellow-400">
+                            {% for i in range(product.rating) %}
+                            <i class="fas fa-star"></i>
+                            {% endfor %}
+                            {% for i in range(5 - product.rating) %}
+                            <i class="far fa-star"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="text-gray-600">({{ product.rating }}/5)</span>
+                        <span class="text-gray-400">•</span>
+                        <span class="text-gray-600">127 đánh giá</span>
+                    </div>
+                </div>
+
+                <!-- Price -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <div class="text-3xl font-bold text-orange-600">{{ product.price }}</div>
+                    <div class="text-sm text-gray-600 mt-1">Đã bao gồm VAT</div>
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Mô tả sản phẩm</h3>
+                    <p class="text-gray-600 leading-relaxed">{{ product.desc }}</p>
+                </div>
+
+                <!-- Features -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Đặc điểm nổi bật</h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-center text-gray-600">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            Chất liệu cao cấp, bền bỉ
+                        </li>
+                        <li class="flex items-center text-gray-600">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            Thiết kế thời trang, hiện đại
+                        </li>
+                        <li class="flex items-center text-gray-600">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            Thoải mái cho mọi hoạt động
+                        </li>
+                        <li class="flex items-center text-gray-600">
+                            <i class="fas fa-check text-green-500 mr-3"></i>
+                            Bảo hành chính hãng 12 tháng
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Size Selection -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Chọn size</h3>
+                    <div class="grid grid-cols-4 gap-3" id="sizeSelection">
+                        {% for size in product.sizes %}
+                        <button class="size-btn border border-gray-300 rounded-lg py-3 text-center hover:border-orange-500 hover:bg-orange-50 transition" 
+                                data-size="{{ size }}">
+                            {{ size }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-2">
+                        <a href="#" class="text-sm text-blue-600 hover:underline">
+                            <i class="fas fa-ruler mr-1"></i>Hướng dẫn chọn size
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Quantity & Add to Cart -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">Số lượng</h3>
+                    <form action="{{ url_for('add_to_giohang') }}" method="post" class="space-y-4">
+                        <input type="hidden" name="product_id" value="{{ product.id }}">
+                        <input type="hidden" name="size" id="selectedSize" value="{{ product.sizes[0] if product.sizes }}">
+                        
+                        <!-- Quantity Selector -->
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center border border-gray-300 rounded-lg">
+                                <button type="button" onclick="decreaseQuantity()" 
+                                        class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-l-lg">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" name="quantity" id="quantity" value="1" min="1" max="10"
+                                       class="w-16 text-center py-3 border-0 focus:ring-0 focus:outline-none">
+                                <button type="button" onclick="increaseQuantity()" 
+                                        class="px-4 py-3 text-gray-600 hover:bg-gray-100 rounded-r-lg">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <span class="text-gray-600">Còn lại 15 sản phẩm</span>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="space-y-3">
+                            <button type="submit" 
+                                    class="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold text-lg hover:bg-orange-600 transition flex items-center justify-center">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Thêm vào giỏ hàng
+                            </button>
+                            <button type="button" 
+                                    class="w-full bg-black text-white py-4 rounded-xl font-semibold text-lg hover:bg-gray-800 transition">
+                                <i class="fas fa-bolt mr-2"></i>
+                                Mua ngay
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="grid grid-cols-2 gap-4 pt-6 border-t border-gray-200">
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-truck text-green-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-900">Miễn phí vận chuyển</div>
+                            <div class="text-sm text-gray-600">Đơn hàng từ 1.000.000đ</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-undo text-blue-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-900">Đổi trả dễ dàng</div>
+                            <div class="text-sm text-gray-600">Trong vòng 30 ngày</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-shield-alt text-purple-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-900">Bảo hành chính hãng</div>
+                            <div class="text-sm text-gray-600">12 tháng toàn quốc</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <i class="fas fa-headset text-orange-500"></i>
+                        <div>
+                            <div class="font-semibold text-gray-900">Hỗ trợ 24/7</div>
+                            <div class="text-sm text-gray-600">Hotline: 1900 xxx</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Tabs -->
+        <div class="mt-16">
+            <div class="border-b border-gray-200">
+                <nav class="-mb-px flex space-x-8">
+                    <button class="tab-btn active py-4 px-1 border-b-2 border-orange-500 font-medium text-sm text-orange-600" 
+                            data-tab="description">
+                        Mô tả chi tiết
+                    </button>
+                    <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" 
+                            data-tab="specifications">
+                        Thông số kỹ thuật
+                    </button>
+                    <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" 
+                            data-tab="reviews">
+                        Đánh giá (127)
+                    </button>
+                    <button class="tab-btn py-4 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700" 
+                            data-tab="shipping">
+                        Vận chuyển & Đổi trả
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div class="py-8">
+                <div id="description" class="tab-content">
+                    <div class="prose max-w-none">
+                        <p class="text-gray-600 leading-relaxed">
+                            {{ product.desc }} - Sản phẩm được thiết kế với công nghệ hiện đại, 
+                            chất liệu cao cấp đảm bảo độ bền và thoải mái tối đa cho người sử dụng.
+                        </p>
+                        <h4 class="text-lg font-semibold mt-6 mb-3">Đặc điểm nổi bật:</h4>
+                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                            <li>Chất liệu da thật cao cấp, mềm mại và bền bỉ</li>
+                            <li>Đế giày chống trượt, êm ái khi di chuyển</li>
+                            <li>Thiết kế thời trang, phù hợp với nhiều phong cách</li>
+                            <li>Dễ dàng vệ sinh và bảo quản</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div id="specifications" class="tab-content hidden">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">Thông tin cơ bản</h4>
+                            <table class="w-full">
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Thương hiệu</td>
+                                    <td class="py-2 font-medium">ShoeStore</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Danh mục</td>
+                                    <td class="py-2 font-medium">{{ product.category|title }}</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Size có sẵn</td>
+                                    <td class="py-2 font-medium">{% for size in product.sizes %}{{ size }}{% if not loop.last %}, {% endif %}{% endfor %}</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Màu sắc</td>
+                                    <td class="py-2 font-medium">Đen, Nâu</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">Chất liệu & Kích thước</h4>
+                            <table class="w-full">
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Chất liệu mặt</td>
+                                    <td class="py-2 font-medium">Da thật cao cấp</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Chất liệu đế</td>
+                                    <td class="py-2 font-medium">Cao su tự nhiên</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Lót giày</td>
+                                    <td class="py-2 font-medium">Vải cotton thấm hút</td>
+                                </tr>
+                                <tr class="border-b">
+                                    <td class="py-2 text-gray-600">Xuất xứ</td>
+                                    <td class="py-2 font-medium">Việt Nam</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="reviews" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Review Summary -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <div class="flex items-center space-x-4">
+                                <div class="text-4xl font-bold text-gray-900">{{ product.rating }}/5</div>
+                                <div>
+                                    <div class="flex text-yellow-400 mb-1">
+                                        {% for i in range(product.rating) %}
+                                        <i class="fas fa-star"></i>
+                                        {% endfor %}
+                                        {% for i in range(5 - product.rating) %}
+                                        <i class="far fa-star"></i>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="text-sm text-gray-600">Dựa trên 127 đánh giá</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Individual Reviews -->
+                        <div class="space-y-4">
+                            <div class="border-b pb-4">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">
+                                        N
+                                    </div>
+                                    <div>
+                                        <div class="font-semibold">Nguyễn Văn A</div>
+                                        <div class="text-sm text-gray-600">2 ngày trước</div>
+                                    </div>
+                                </div>
+                                <div class="flex text-yellow-400 mb-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <p class="text-gray-600">Sản phẩm rất chất lượng, đúng như mô tả. Giao hàng nhanh, đóng gói cẩn thận.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="shipping" class="tab-content hidden">
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">Chính sách vận chuyển</h4>
+                            <ul class="space-y-3 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Miễn phí vận chuyển cho đơn hàng từ 1.000.000đ
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Giao hàng trong 2-3 ngày làm việc
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Hỗ trợ giao hàng toàn quốc
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-4">Chính sách đổi trả</h4>
+                            <ul class="space-y-3 text-gray-600">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Đổi trả trong vòng 30 ngày
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Sản phẩm chưa qua sử dụng
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-green-500 mr-3 mt-1"></i>
+                                    Miễn phí đổi size trong 7 ngày đầu
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12 mt-16">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <h3 class="text-xl font-bold mb-4">ShoeStore</h3>
+                <p class="text-gray-400 mb-4">Cửa hàng giày dép uy tín số 1 Việt Nam</p>
+                <div class="border-t border-gray-700 mt-8 pt-8">
+                    <p class="text-gray-400 text-sm">&copy; 2025 ShoeStore. Tất cả quyền được bảo lưu.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Size selection
+        document.querySelectorAll('.size-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Remove active class from all buttons
+                document.querySelectorAll('.size-btn').forEach(b => {
+                    b.classList.remove('border-orange-500', 'bg-orange-50', 'text-orange-600');
+                    b.classList.add('border-gray-300');
+                });
+                
+                // Add active class to clicked button
+                this.classList.remove('border-gray-300');
+                this.classList.add('border-orange-500', 'bg-orange-50', 'text-orange-600');
+                
+                // Update hidden input
+                document.getElementById('selectedSize').value = this.dataset.size;
+            });
+        });
+
+        // Quantity controls
+        function increaseQuantity() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) < 10) {
+                input.value = parseInt(input.value) + 1;
+            }
+        }
+
+        function decreaseQuantity() {
+            const input = document.getElementById('quantity');
+            if (parseInt(input.value) > 1) {
+                input.value = parseInt(input.value) - 1;
+            }
+        }
+
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabId = this.dataset.tab;
+                
+                // Remove active class from all buttons
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('border-orange-500', 'text-orange-600');
+                    b.classList.add('border-transparent', 'text-gray-500');
+                });
+                
+                // Add active class to clicked button
+                this.classList.remove('border-transparent', 'text-gray-500');
+                this.classList.add('border-orange-500', 'text-orange-600');
+                
+                // Hide all tab contents
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                
+                // Show selected tab content
+                document.getElementById(tabId).classList.remove('hidden');
+            });
+        });
+
+        // Auto-hide flash messages
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // Image gallery (for future enhancement)
+        document.querySelectorAll('.cursor-pointer img').forEach(img => {
+            img.addEventListener('click', function() {
+                document.getElementById('mainImage').src = this.src;
+            });
+        });
+    </script>
+</body>
+</html>

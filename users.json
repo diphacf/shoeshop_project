@@ -1,0 +1,8 @@
+[
+  {
+    "fullname": "Duy",
+    "email": "duy1@gmail.com",
+    "phone": "1234567891",
+    "password_hash": "scrypt:32768:8:1$tuLQWQ1GSH3xGNEc$d1e95908588b64ddebe1a9ce274d551f7105993dc9ec81ef2e758fd3edaabf4126b00f244d22e5a24ca78899bf0b3d53751e45bc30332053db5c3d8d3cdc7bd6"
+  }
+]
